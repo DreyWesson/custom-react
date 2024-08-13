@@ -4,15 +4,7 @@ import { renderApp, useState, createElement } from "./myReact";
 export const App = () => {
   const [count, setCount] = useState(0);
 
-  return createElement(
-    "div",
-    {},
-    createElement("h1", {}, `Count: ${count}`),
-    createElement(
-      "button",
-      { onClick: () => setCount(count + 1) },
-      "Increment"
-    ),
+  return (
     createElement(
       "div",
       {},
@@ -71,17 +63,18 @@ export const App = () => {
             "p",
             {},
             "This is an example of a normal HTML page rendered using MyReact."
-          )
-        ),
-        createElement(
-          "section",
-          { className: "details" },
+          ),
           createElement(
-            "p",
+            "div",
             {},
-            "It includes headers, navigation, and main content."
-          )
-        )
+            createElement("h1", {}, `Count: ${count}`),
+            createElement(
+              "button",
+              { onClick: () => setCount(count + 1) },
+              "Increment"
+            )
+          ),
+        ),
       ),
       createElement(
         "footer",
