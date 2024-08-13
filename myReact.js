@@ -1,4 +1,5 @@
 import { App } from ".";
+import { addNewProps,  createKeyedMap,  hasNodeChanged,  removeOldProps, updateProps } from "./helper";
 
 class MyReact {
   constructor() {
@@ -23,11 +24,10 @@ class MyReact {
     if (typeof element === "string" || typeof element === "number") {
       return document.createTextNode(String(element));
     }
-
+    const {key, ...otherProps} = element.props
     const domElement = document.createElement(element.type);
-    this
-      .updateProps(domElement, {}, element.props)
-      .appendChildren(domElement, element.props.children);
+    updateProps(domElement, {}, otherProps);
+    this.appendChildren(domElement, element.props.children);
     return domElement;
   };
 
@@ -75,166 +75,75 @@ class MyReact {
       return;
     }
 
-    if (this.hasNodeChanged(oldNode, newNode)) {
+    if (hasNodeChanged(oldNode, newNode)) {
       parent.replaceChild(this.createRealDOM(newNode), existingNode);
       return;
     }
 
     if (newNode.type) {
-      this
-        .updateProps(existingNode, oldNode.props, newNode.props)
-        .diffChildren(existingNode,oldNode.props.children,newNode.props.children);
+      updateProps(existingNode, oldNode.props, newNode.props)
+      this.diffChildren(existingNode,oldNode.props.children,newNode.props.children);
     }
-    return this;
   };
 
   diffChildren = (parent, oldChildren = [], newChildren = []) => {
-    const oldChildrenKeyed = this.createKeyedMap(oldChildren);
-    const newChildrenKeyed = this.createKeyedMap(newChildren);
+    const oldChildrenKeyed = createKeyedMap(oldChildren);
+    const newChildrenKeyed = createKeyedMap(newChildren);
 
-    // Track indices of processed children
+    const handledIndices = this.updateNewChildren(parent, newChildren, oldChildren, oldChildrenKeyed);
+
+    this.removeOldChildren(parent, oldChildren, newChildrenKeyed, handledIndices);
+  };
+
+  updateNewChildren = (parent, newChildren, oldChildren, oldChildrenKeyed) => {
     const handledIndices = new Set();
 
-    // Loop through new children and reconcile with old children
     newChildren.forEach((newChild, i) => {
       const oldChild = oldChildrenKeyed[newChild?.key] || oldChildren[i];
       this.diff(parent, oldChild, newChild, i);
       handledIndices.add(i);
     });
 
-    // Remove any old children not present in new children
+    return handledIndices;
+  };
+
+  removeOldChildren = (parent, oldChildren, newChildrenKeyed, handledIndices) => {
     oldChildren.forEach((oldChild, i) => {
       if (!handledIndices.has(i) && !newChildrenKeyed[oldChild?.key]) {
         this.diff(parent, oldChild, null, i);
       }
     });
-    return this;
   };
+  
 
-  createKeyedMap = (children) => {
-    return children.reduce((acc, child, index) => {
-      if (child && child.key !== null) acc[child.key] = child;
-      else acc[index] = child; // Fallback to index if no key
-      return acc;
-    }, {});
-  };
-
-  isPropChanged = (oldProp, newProp) => {
-    if (typeof oldProp === "object" && typeof newProp === "object") {
-      return JSON.stringify(oldProp) !== JSON.stringify(newProp);
-    }
-    return oldProp !== newProp;
-  };
-
-  hasNodeChanged = (node1, node2) => {
-    return (
-      typeof node1 !== typeof node2 ||
-      ((typeof node1 === "string" || typeof node1 === "number") &&
-        node1 !== node2) ||
-      node1.type !== node2.type ||
-      node1.key !== node2.key
-    );
-  };
-
-  // 5. Handling DOM Updates
   scheduleUpdate = () => {
     if (!this.isUpdateScheduled) {
       this.isUpdateScheduled = true;
       requestAnimationFrame(() => this.processUpdate());
     }
-    return this;
   };
 
   processUpdate = () => {
     this.renderApp();
     this.isUpdateScheduled = false;
-    return this;
   };
 
   renderApp = () => {
-    this.startRender();
-    const root = this.container || document.getElementById("root");
-    this
-      .render(App(), root)
-      .endRender();
-    return this;
-  };
-
-  startRender = () => {
     this.isRendering = true;
     this.stateIdx = 0;
-    return this;
-  };
-
-  endRender = () => {
+    const root = this.container || document.getElementById("root");
+    this.render(App(), root);
     this.isRendering = false;
     this.stateIdx = 0;
-    return this;
-  };
-
-  updateProps = (domElement, oldProps, newProps) => {
-    this
-      .removeOldProps(domElement, oldProps, newProps)
-      .addNewProps(domElement, oldProps, newProps);
-    return this;
   };
 
   appendChildren = (domElement, children) => {
     children
       .map(this.createRealDOM)
       .forEach((child) => domElement.appendChild(child));
-    return this;
-  };
-
-  removeOldProps = (domElement, oldProps, newProps) => {
-    for (let name in oldProps) {
-      if (name === "children") continue;
-      if (!(name in newProps)) {
-        this.removeProp(domElement, name, oldProps[name]);
-      }
-    }
-    return this;
-  };
-
-  addNewProps = (domElement, oldProps, newProps) => {
-    for (let name in newProps) {
-      if (name === "children") continue;
-      if (this.isPropChanged(oldProps[name], newProps[name])) {
-        this.setProp(domElement, name, newProps[name]);
-      }
-    }
-    return this;
-  };
-
-  removeProp = (domElement, name, value) => {
-    if (name.startsWith("on")) {
-      domElement.removeEventListener(name.toLowerCase().substring(2), value);
-    } else if (name === "style") {
-      domElement.style = "";
-    } else if (name in domElement) {
-      domElement[name] = "";
-    } else {
-      domElement.removeAttribute(name);
-    }
-    return this;
-  };
-
-  setProp = (domElement, name, value) => {
-    if (name.startsWith("on")) {
-      const eventType = name.toLowerCase().substring(2);
-      domElement.addEventListener(eventType, value);
-    } else if (name === "style") {
-      Object.assign(domElement.style, value || {});
-    } else if (name in domElement) {
-      domElement[name] = value;
-    } else {
-      domElement.setAttribute(name, value);
-    }
-    return this;
   };
 }
 
-// Exporting the instance and utility functions
 const myReactInstance = new MyReact();
 
 export const createElement = myReactInstance.createElement;
