@@ -2,7 +2,7 @@ Building Your Own React: A Step-by-Step Guide to Creating a Simplified React-Lik
 Have you ever wondered what makes React tick? How does it manage to be so efficient in updating the user interface, or how does it allow us to effortlessly manage state in our applications? If you’ve ever been curious about the inner workings of React, you’re in the right place. Today, we’re going to dive deep and build our own simplified version of React, from scratch.
 
 Why Build Your Own React?
-Before we dive into the code, you might be wondering, "Why would I want to build my own React?" The answer is simple: understanding. By building a simplified version of React, you'll gain a deeper understanding of the core concepts that make React such a powerful library. Concepts like virtual DOM, state management, and component rendering will become much clearer when you’ve implemented them yourself.
+Before we dive into the code, you might be wondering, "Why would I want to build my own React?" The answer is simple: understanding. By building a simplified version of React, you'll gain a deeper understanding of the core concepts that make React such a powerful library. Concepts like virtual DOM, Reconciliation, state management, and component rendering will become much clearer when you’ve implemented them yourself.
 
 Setting the Stage: The Basics
 At the heart of React is a few key concepts:

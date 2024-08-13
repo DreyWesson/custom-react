@@ -19,23 +19,36 @@ class MyReact {
     };
   };
 
+  createRealDOM = (element) => {
+    if (typeof element === "string" || typeof element === "number") {
+      return document.createTextNode(String(element));
+    }
+
+    const domElement = document.createElement(element.type);
+    this
+      .updateProps(domElement, {}, element.props)
+      .appendChildren(domElement, element.props.children);
+    return domElement;
+  };
+
   // 2. Rendering the Virtual DOM to the Real DOM
-  render = (element, container) => {
+  render = (newVDOM, container) => {
     this.container = container;
-    const newVirtualDOM = element;
 
-    if (this.oldVDOM) this.diff(container, this.oldVDOM, newVirtualDOM);
-    else container.appendChild(this.createRealDOM(newVirtualDOM));
+    this.oldVDOM
+      ? this.diff(container, this.oldVDOM, newVDOM)
+      : container.appendChild(this.createRealDOM(newVDOM));
 
-    this.oldVDOM = newVirtualDOM;
+    this.oldVDOM = newVDOM;
+    return this;
   };
 
   // 3. Managing State
   useState = (initialValue) => {
+    const idx = this.stateIdx;
+
     if (!this.isRendering)
       throw new Error("useState can only be called during rendering");
-
-    const idx = this.stateIdx;
 
     if (this.state[idx] === undefined) this.state[idx] = initialValue;
 
@@ -68,13 +81,11 @@ class MyReact {
     }
 
     if (newNode.type) {
-      this.updateProps(existingNode, oldNode.props, newNode.props);
-      this.diffChildren(
-        existingNode,
-        oldNode.props.children,
-        newNode.props.children
-      );
+      this
+        .updateProps(existingNode, oldNode.props, newNode.props)
+        .diffChildren(existingNode,oldNode.props.children,newNode.props.children);
     }
+    return this;
   };
 
   diffChildren = (parent, oldChildren = [], newChildren = []) => {
@@ -97,6 +108,7 @@ class MyReact {
         this.diff(parent, oldChild, null, i);
       }
     });
+    return this;
   };
 
   createKeyedMap = (children) => {
@@ -130,51 +142,48 @@ class MyReact {
       this.isUpdateScheduled = true;
       requestAnimationFrame(() => this.processUpdate());
     }
+    return this;
   };
 
   processUpdate = () => {
     this.renderApp();
     this.isUpdateScheduled = false;
+    return this;
   };
 
   renderApp = () => {
     this.startRender();
     const root = this.container || document.getElementById("root");
-    this.render(App(), root);
-    this.endRender();
+    this
+      .render(App(), root)
+      .endRender();
+    return this;
   };
 
   startRender = () => {
     this.isRendering = true;
     this.stateIdx = 0;
+    return this;
   };
 
   endRender = () => {
     this.isRendering = false;
     this.stateIdx = 0;
-  };
-
-
-  createRealDOM = (element) => {
-    if (typeof element === "string" || typeof element === "number") {
-      return document.createTextNode(String(element));
-    }
-
-    const domElement = document.createElement(element.type);
-    this.updateProps(domElement, {}, element.props);
-    this.appendChildren(domElement, element.props.children);
-    return domElement;
+    return this;
   };
 
   updateProps = (domElement, oldProps, newProps) => {
-    this.removeOldProps(domElement, oldProps, newProps);
-    this.addNewProps(domElement, oldProps, newProps);
+    this
+      .removeOldProps(domElement, oldProps, newProps)
+      .addNewProps(domElement, oldProps, newProps);
+    return this;
   };
 
   appendChildren = (domElement, children) => {
     children
       .map(this.createRealDOM)
       .forEach((child) => domElement.appendChild(child));
+    return this;
   };
 
   removeOldProps = (domElement, oldProps, newProps) => {
@@ -184,6 +193,7 @@ class MyReact {
         this.removeProp(domElement, name, oldProps[name]);
       }
     }
+    return this;
   };
 
   addNewProps = (domElement, oldProps, newProps) => {
@@ -193,6 +203,7 @@ class MyReact {
         this.setProp(domElement, name, newProps[name]);
       }
     }
+    return this;
   };
 
   removeProp = (domElement, name, value) => {
@@ -205,6 +216,7 @@ class MyReact {
     } else {
       domElement.removeAttribute(name);
     }
+    return this;
   };
 
   setProp = (domElement, name, value) => {
@@ -218,6 +230,7 @@ class MyReact {
     } else {
       domElement.setAttribute(name, value);
     }
+    return this;
   };
 }
 

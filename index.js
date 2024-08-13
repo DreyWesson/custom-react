@@ -1,5 +1,4 @@
 import { renderApp, useState, createElement } from "./myReact";
-// import { renderApp, useState, createElement } from "./myReact_func";
 
 export const App = () => {
   const [count, setCount] = useState(0);
