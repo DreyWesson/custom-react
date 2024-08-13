@@ -1,0 +1,101 @@
+Building Your Own React: A Step-by-Step Guide to Creating a Simplified React-Like Library
+Have you ever wondered what makes React tick? How does it manage to be so efficient in updating the user interface, or how does it allow us to effortlessly manage state in our applications? If you’ve ever been curious about the inner workings of React, you’re in the right place. Today, we’re going to dive deep and build our own simplified version of React, from scratch.
+
+Why Build Your Own React?
+Before we dive into the code, you might be wondering, "Why would I want to build my own React?" The answer is simple: understanding. By building a simplified version of React, you'll gain a deeper understanding of the core concepts that make React such a powerful library. Concepts like virtual DOM, state management, and component rendering will become much clearer when you’ve implemented them yourself.
+
+Setting the Stage: The Basics
+At the heart of React is a few key concepts:
+
+Virtual DOM: A lightweight representation of the actual DOM that allows React to perform efficient updates.
+State Management: A way to manage data that changes over time, allowing your UI to react to these changes.
+Component Rendering: The process of turning your components into actual DOM elements on the page.
+
+Our goal is to build a mini React-like library that handles these three concepts. Let’s break down the implementation step by step.
+
+Step 1: Creating a Virtual DOM
+In React, everything starts with the createElement function, which creates a virtual representation of a DOM element. This virtual DOM is a plain JavaScript object that mirrors the structure of the real DOM.
+class MyReact {
+  createElement = (type, props = {}, ...children) => {
+    return {
+      type,
+      props: { ...props, children: children.flat() },
+      key: props.key || null,
+    };
+  };
+}
+The createElement function takes a type (e.g div or span), props (e.g id or className), and any number of children(text, numbers or nested html element). It returns an object that represents this virtual DOM node. This object is much simpler and lighter than an actual DOM node, which makes it easier and faster to work with.
+
+Step 2: Rendering the Virtual DOM to the Real DOM
+Once we have a virtual DOM, we need a way to render it to the actual DOM. This is where the render function comes into play:
+render = (element, container) => {
+  this.container = container;
+  const newVirtualDOM = element;
+
+  if (this.oldVDOM) {
+    this.diff(container, this.oldVDOM, newVirtualDOM);
+  } else {
+    container.appendChild(this.createRealDOM(newVirtualDOM));
+  }
+
+  this.oldVDOM = newVirtualDOM;
+};
+No such thing as magic, in the above we are only saving both the container reference and our new virtual dom in our current context. Next the function compares the new virtual DOM with the previous one (if it exists) and updates the real DOM accordingly. If there’s no previous virtual DOM (i.e., on the initial render), it directly creates and appends the new DOM elements. This process of comparing differences is known a "DIFFING" which is branch of react "Reconciliation Process".
+
+Step 3: Managing State
+The ability to manage state is one of its most powerful features of react and what is our react if we don't mimic this feature:
+useState = (initialValue) => {
+  if (!this.isRendering) throw new Error("useState can only be called during rendering");
+
+  const idx = this.stateIdx;
+
+  if (this.state[idx] === undefined) this.state[idx] = initialValue;
+
+  const setState = (newValue) => {
+    this.state[idx] = newValue;
+    this.scheduleUpdate();
+  };
+
+  this.stateIdx++;
+  return [this.state[idx], setState];
+};
+Our useState function is similar to React’s. It initializes state on the first render and returns an array containing the state and a function to update it. When setState is called, it updates the state and schedules a re-render(just so we mimic react batching of updates for performance reasons). In the function we ensured that the useState is called only when rendering and throw an error when it's called elsewhere.
+
+Step 4: RECONCILIATION - Diffing and Updating the DOM
+One of the most impressive features of React is its ability to update only the parts of the DOM that have changed. This is achieved through a process called “diffing,” where the new virtual DOM is compared with the old one to determine what needs to be updated. I believe I have touched on this topic slightly above. Its important to note that the entire process of updating the UI in response to change of state or props is called RECONCILIATION. So, Diffing + Updating = Reconciliation - my math is great!.
+diff = (parent, oldNode, newNode, index = 0) => {
+  const existingNode = parent.childNodes[index];
+
+  if (!newNode) {
+    if (existingNode) parent.removeChild(existingNode);
+    return;
+  }
+
+  if (!oldNode) {
+    parent.appendChild(this.createRealDOM(newNode));
+    return;
+  }
+
+  if (this.hasNodeChanged(oldNode, newNode)) {
+    parent.replaceChild(this.createRealDOM(newNode), existingNode);
+    return;
+  }
+
+  if (newNode.type) {
+    this.updateProps(existingNode, oldNode.props, newNode.props);
+    this.diffChildren(existingNode, oldNode.props.children, newNode.props.children);
+  }
+};
+
+Step 5: Handling DOM Updates
+I have always raved about some feature in react, but likewise many features of the DOM its self are brilliant. One of these feature is the requestAnimationFrame. It ensures that updates are handled efficiently,this allows us to batch updates and avoid unnecessary re-renders.  We leverage on this feature for smooth, efficient user experience by strategically scheduling updates. When interacting with our application often times multiple state updates are triggered and effecting such update immediately would be excessive and not optimal. That department is where requestAnimationFrame shines. The function instructs the browser to execute a function right before the nect repaint by the browser. This is very crucial as it ensures synchrony with the browser's natural rendering cycle, so while waiting for this the next cycle for screen update(which is 60 frames per sec) we are able to get as many update as we can and aplying it in one go - brilliant yeah? 
+scheduleUpdate = () => {
+  if (!this.isUpdateScheduled) {
+    this.isUpdateScheduled = true;
+    requestAnimationFrame(() => this.processUpdate());
+  }
+};
+processUpdate = () => {
+  this.renderApp();
+  this.isUpdateScheduled = false;
+};
