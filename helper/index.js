@@ -7,7 +7,6 @@ export const createKeyedMap = (children) => {
 };
 
 export const hasNodeChanged = (node1, node2) => {
-  console.log({node1, node2})
   return (
     typeof node1 !== typeof node2 ||
     ((typeof node1 === "string" || typeof node1 === "number") &&
@@ -18,29 +17,63 @@ export const hasNodeChanged = (node1, node2) => {
 };
 
 export const updateProps = (domElement, oldProps, newProps) => {
+  // console.log("Updating props", { oldProps, newProps });
   removeOldProps(domElement, oldProps, newProps);
   addNewProps(domElement, oldProps, newProps);
 };
 
 export const removeOldProps = (domElement, oldProps, newProps) => {
   for (let name in oldProps) {
-    if (name === "children" || name === "key") continue;
-    if (!(name in newProps)) removeProp(domElement, name, oldProps[name]);
+    if (name === "children") continue;
+
+    if (name === "style") {
+      const oldStyle = oldProps[name] || {};
+      const newStyle = newProps[name] || {};
+      for (let styleName in oldStyle) {
+        if (!(styleName in newStyle)) {
+          // console.log(`Removing style: ${styleName} (value: ${oldStyle[styleName]})`);
+          domElement.style[styleName] = "";
+        }
+      }
+    } else if (!(name in newProps)) {
+      // console.log(`Removing prop: ${name} (value: ${oldProps[name]})`);
+      removeProp(domElement, name, oldProps[name]);
+    }
   }
 };
 
 export const addNewProps = (domElement, oldProps, newProps) => {
   for (let name in newProps) {
-    if (name === "children" || name === "key") continue;
-    if (isPropChanged(oldProps[name], newProps[name]))
+    if (name === "children") continue;
+
+    if (name === "style") {
+      const oldStyle = oldProps[name] || {};
+      const newStyle = newProps[name] || {};
+      for (let styleName in newStyle) {
+        let styleValue = newStyle[styleName];
+        
+       
+        if (typeof styleValue === 'function') {
+          styleValue = styleValue();
+        }
+
+        if (isPropChanged(oldStyle[styleName], styleValue)) {
+          // console.log(`Setting style: ${styleName} (value: ${styleValue})`);
+          domElement.style[styleName] = styleValue;
+        }
+      }
+    } else if (isPropChanged(oldProps[name], newProps[name])) {
+      // console.log(`Setting prop: ${name} (value: ${newProps[name]})`);
       setProp(domElement, name, newProps[name]);
+    }
   }
 };
+
 
 export const removeProp = (domElement, name, value) => {
   if (name.startsWith("on")) {
     const eventType = name.toLowerCase().substring(2);
-    domElement.removeEventListener(eventType);
+    domElement.removeEventListener(eventType, value);
   } else if (name === "style") {
     domElement.style = "";
   } else if (name in domElement) {
@@ -53,8 +86,10 @@ export const removeProp = (domElement, name, value) => {
 export const setProp = (domElement, name, value) => {
   if (name.startsWith("on")) {
     const eventType = name.toLowerCase().substring(2);
+    // console.log(`Attaching event: ${eventType}`);
     domElement.addEventListener(eventType, value);
   } else if (name === "style") {
+    // console.log(`Setting style: ${JSON.stringify(value)}`);
     Object.assign(domElement.style, value || {});
   } else if (name in domElement) {
     domElement[name] = value;
