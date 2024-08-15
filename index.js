@@ -1,4 +1,4 @@
-import { renderApp, useState, createElement } from "./myReact";
+import { useState, createElement, render } from "./myReact";
 
 export const App = () => {
   const [count, setCount] = useState(0);
@@ -84,4 +84,4 @@ export const App = () => {
   );
 };
 
-renderApp();
+render(App, document.getElementById("#root"));

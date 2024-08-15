@@ -7,7 +7,7 @@ export const createKeyedMap = (children) => {
 };
 
 export const hasNodeChanged = (node1, node2) => {
-
+  console.log({node1, node2})
   return (
     typeof node1 !== typeof node2 ||
     ((typeof node1 === "string" || typeof node1 === "number") &&

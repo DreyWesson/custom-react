@@ -1,9 +1,5 @@
 import { App } from ".";
-import {
-  createKeyedMap,
-  hasNodeChanged,
-  updateProps,
-} from "./helper";
+import { createKeyedMap, hasNodeChanged, updateProps } from "./helper";
 
 class MyReact {
   constructor() {
@@ -36,10 +32,8 @@ class MyReact {
   };
 
   // 2. Rendering the Virtual DOM to the Real DOM
-  render = (newVDOM, container) => {
+  renderToDOM = (newVDOM, container) => {
     this.container = container;
-    this.isRendering = true;
-    this.stateIdx = 0;
 
     this.oldVDOM
       ? this.diff(container, this.oldVDOM, newVDOM)
@@ -140,16 +134,20 @@ class MyReact {
   };
 
   processUpdate = () => {
-    this.renderApp();
+    this.render();
     this.isUpdateScheduled = false;
   };
 
-  renderApp = () => {
+
+
+  render = (app = App, container) => {
     this.isRendering = true;
     this.stateIdx = 0;
-    const root = this.container || document.getElementById("root");
-    const app_ = App();
-    this.render(app_, root);
+
+    container = container || this.container || document.getElementById("root");
+
+    this.renderToDOM(app(), container);
+
     this.isRendering = false;
     this.stateIdx = 0;
   };
@@ -164,6 +162,5 @@ class MyReact {
 const myReactInstance = new MyReact();
 
 export const createElement = myReactInstance.createElement;
-export const render = myReactInstance.render;
 export const useState = myReactInstance.useState;
-export const renderApp = myReactInstance.renderApp;
+export const render = myReactInstance.render;
