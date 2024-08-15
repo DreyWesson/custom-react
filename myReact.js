@@ -1,5 +1,9 @@
 import { App } from ".";
-import { addNewProps,  createKeyedMap,  hasNodeChanged,  removeOldProps, updateProps } from "./helper";
+import {
+  createKeyedMap,
+  hasNodeChanged,
+  updateProps,
+} from "./helper";
 
 class MyReact {
   constructor() {
@@ -24,16 +28,18 @@ class MyReact {
     if (typeof element === "string" || typeof element === "number") {
       return document.createTextNode(String(element));
     }
-    const {key, ...otherProps} = element.props
+    const { key, children, ...props } = element.props;
     const domElement = document.createElement(element.type);
-    updateProps(domElement, {}, otherProps);
-    this.appendChildren(domElement, element.props.children);
+    updateProps(domElement, {}, props);
+    this.appendChildren(domElement, children);
     return domElement;
   };
 
   // 2. Rendering the Virtual DOM to the Real DOM
   render = (newVDOM, container) => {
     this.container = container;
+    this.isRendering = true;
+    this.stateIdx = 0;
 
     this.oldVDOM
       ? this.diff(container, this.oldVDOM, newVDOM)
@@ -65,24 +71,20 @@ class MyReact {
   diff = (parent, oldNode, newNode, index = 0) => {
     const existingNode = parent.childNodes[index];
 
-    if (!newNode) {
-      if (existingNode) parent.removeChild(existingNode);
-      return;
-    }
+    if (!newNode) return existingNode && parent.removeChild(existingNode);
 
-    if (!oldNode) {
-      parent.appendChild(this.createRealDOM(newNode));
-      return;
-    }
+    if (!oldNode) return parent.appendChild(this.createRealDOM(newNode));
 
-    if (hasNodeChanged(oldNode, newNode)) {
-      parent.replaceChild(this.createRealDOM(newNode), existingNode);
-      return;
-    }
+    if (hasNodeChanged(oldNode, newNode))
+      return parent.replaceChild(this.createRealDOM(newNode), existingNode);
 
     if (newNode.type) {
-      updateProps(existingNode, oldNode.props, newNode.props)
-      this.diffChildren(existingNode,oldNode.props.children,newNode.props.children);
+      updateProps(existingNode, oldNode.props, newNode.props);
+      this.diffChildren(
+        existingNode,
+        oldNode.props.children,
+        newNode.props.children
+      );
     }
   };
 
@@ -90,9 +92,19 @@ class MyReact {
     const oldChildrenKeyed = createKeyedMap(oldChildren);
     const newChildrenKeyed = createKeyedMap(newChildren);
 
-    const handledIndices = this.updateNewChildren(parent, newChildren, oldChildren, oldChildrenKeyed);
+    const handledIndices = this.updateNewChildren(
+      parent,
+      newChildren,
+      oldChildren,
+      oldChildrenKeyed
+    );
 
-    this.removeOldChildren(parent, oldChildren, newChildrenKeyed, handledIndices);
+    this.removeOldChildren(
+      parent,
+      oldChildren,
+      newChildrenKeyed,
+      handledIndices
+    );
   };
 
   updateNewChildren = (parent, newChildren, oldChildren, oldChildrenKeyed) => {
@@ -107,14 +119,18 @@ class MyReact {
     return handledIndices;
   };
 
-  removeOldChildren = (parent, oldChildren, newChildrenKeyed, handledIndices) => {
+  removeOldChildren = (
+    parent,
+    oldChildren,
+    newChildrenKeyed,
+    handledIndices
+  ) => {
     oldChildren.forEach((oldChild, i) => {
       if (!handledIndices.has(i) && !newChildrenKeyed[oldChild?.key]) {
         this.diff(parent, oldChild, null, i);
       }
     });
   };
-  
 
   scheduleUpdate = () => {
     if (!this.isUpdateScheduled) {
@@ -132,7 +148,8 @@ class MyReact {
     this.isRendering = true;
     this.stateIdx = 0;
     const root = this.container || document.getElementById("root");
-    this.render(App(), root);
+    const app_ = App();
+    this.render(app_, root);
     this.isRendering = false;
     this.stateIdx = 0;
   };

@@ -7,9 +7,11 @@ export const createKeyedMap = (children) => {
 };
 
 export const hasNodeChanged = (node1, node2) => {
+
   return (
     typeof node1 !== typeof node2 ||
-    ((typeof node1 === "string" || typeof node1 === "number") && node1 !== node2) ||
+    ((typeof node1 === "string" || typeof node1 === "number") &&
+      node1 !== node2) ||
     node1.type !== node2.type ||
     node1.key !== node2.key
   );
@@ -20,12 +22,10 @@ export const updateProps = (domElement, oldProps, newProps) => {
   addNewProps(domElement, oldProps, newProps);
 };
 
-
 export const removeOldProps = (domElement, oldProps, newProps) => {
   for (let name in oldProps) {
     if (name === "children" || name === "key") continue;
-    if (!(name in newProps))
-      removeProp(domElement, name, oldProps[name]);
+    if (!(name in newProps)) removeProp(domElement, name, oldProps[name]);
   }
 };
 

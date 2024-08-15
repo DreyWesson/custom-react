@@ -99,3 +99,87 @@ processUpdate = () => {
   this.renderApp();
   this.isUpdateScheduled = false;
 };
+
+
+
+
+
+
+
+
+Logic:
+1. RenderApp: This is the function that starts the whole process of creating our application. It keeps a state to note that the rendering process has started and resets the start index to zero so as to prepare for the next render cycle. Then calls the render() function with the created/updated DOM and container to inserts it. When this is done it resets the endering to false and stateIdx to zero in readiness for the next rendering cycle.
+
+2. render: These updates the DOM with the new virtual DOM we want to insert and the container we wanna insert it.
+renderApp. So, for optimization, we don't want to just dump the newly created/updated DOM but we wanna compare and see what has changed and update just that. Also, create new DOM only if the DOM is empty
+
+Calls: diff if this.oldVDOM exists; otherwise, createRealDOM and appends it to the container.
+
+1. diff
+
+Calls:
+createRealDOM if oldNode is null or hasNodeChanged returns true.
+updateProps if newNode.type exists.
+diffChildren if newNode.type exists.
+
+4. diffChildren
+
+Calls:
+createKeyedMap twice (for oldChildren and newChildren).
+updateNewChildren
+removeOldChildren
+
+5. updateNewChildren
+
+Calls: diff in a loop for each new child.
+
+6. removeOldChildren
+
+Calls: diff in a loop for each old child that was not handled in updateNewChildren.
+
+7. createRealDOM
+
+Calls:
+updateProps
+appendChildren
+
+8. appendChildren
+
+Calls: createRealDOM for each child in the children array and appends them to domElement.
+
+9. updateProps
+
+Calls:
+removeOldProps
+addNewProps
+
+10. removeOldProps
+
+Calls: removeProp for each prop that is in oldProps but not in newProps.
+
+11. addNewProps
+
+Calls:
+isPropChanged to check if a prop needs updating.
+setProp for each prop that has changed.
+
+12. removeProp
+
+Independent function: Does not call any other functions but performs DOM manipulation.
+
+13. setProp
+
+Independent function: Does not call any other functions but performs DOM manipulation.
+
+14. createKeyedMap
+
+Independent function: Does not call any other functions but processes the children array to create a map.
+
+15. hasNodeChanged
+
+Independent function: Does not call any other functions but compares nodes to see if they have changed.
+
+16. isPropChanged
+
+Independent function: Does not call any other functions but checks if a prop has changed by comparing old and new values.
+In

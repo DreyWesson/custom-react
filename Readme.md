@@ -19,3 +19,4 @@ To create a normal html element there are 3 important pieces.
 1. Element type eg div, h1, span etc
 2. Properties and Attributes e.g class, onClick, id etc
 3. Content: which is what is contained in the element e.g text or nested html elements.
+
