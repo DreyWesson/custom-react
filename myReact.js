@@ -11,8 +11,11 @@ class MyReact {
     this.isUpdateScheduled = false;
   }
 
-  // 1. Creating a Virtual DOM
   createElement = (type, props = {}, ...children) => {
+    if (typeof type === 'function') {
+      return type({ ...props, children });
+    }
+
     return {
       type,
       props: { ...props, children: children.flat() },
@@ -21,23 +24,40 @@ class MyReact {
   };
 
   createRealDOM = (element) => {
-    if (typeof element === "string" || typeof element === "number") {
+    if (typeof element === "string" || typeof element === "number")
       return document.createTextNode(String(element));
+
+    if (!element || !element.type)
+      return document.createTextNode('');
+
+    if (typeof element.type === 'function') {
+      const renderedElement = element.type(element.props);
+      return this.createRealDOM(renderedElement);
     }
+
     const { key, children, ...props } = element.props;
     const domElement = document.createElement(element.type);
     updateProps(domElement, {}, props);
     this.appendChildren(domElement, children);
+    
     return domElement;
   };
 
-  // 2. Rendering the Virtual DOM to the Real DOM
-  renderToDOM = (newVDOM, container) => {
-    this.container = container;
+  appendChildren = (domElement, children) => {
+    children
+      .filter(child => child != null)
+      .map(this.createRealDOM)
+      .forEach((child) => domElement.appendChild(child));
+  };
+  
+
+  // 2. Rendering the Virtual DOM in the container/root
+  renderToDOM = (newVDOM, root) => {
+    this.container = root;
 
     this.oldVDOM
-      ? this.diff(container, this.oldVDOM, newVDOM)
-      : container.appendChild(this.createRealDOM(newVDOM));
+      ? this.diff(root, this.oldVDOM, newVDOM)
+      : root.appendChild(this.createRealDOM(newVDOM));
 
     this.oldVDOM = newVDOM;
     return this;
@@ -142,17 +162,10 @@ class MyReact {
     this.stateIdx = 0;
 
     container = container || this.container || document.getElementById("root");
-
     this.renderToDOM(app(), container);
 
     this.isRendering = false;
     this.stateIdx = 0;
-  };
-
-  appendChildren = (domElement, children) => {
-    children
-      .map(this.createRealDOM)
-      .forEach((child) => domElement.appendChild(child));
   };
 }
 

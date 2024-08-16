@@ -115,29 +115,29 @@ renderApp. So, for optimization, we don't want to just dump the newly created/up
 
 Calls: diff if this.oldVDOM exists; otherwise, createRealDOM and appends it to the container.
 
-1. diff
+        a.) diff
 
-Calls:
-createRealDOM if oldNode is null or hasNodeChanged returns true.
-updateProps if newNode.type exists.
-diffChildren if newNode.type exists.
+        Calls:
+        createRealDOM if oldNode is null or hasNodeChanged returns true.
+        updateProps if newNode.type exists.
+        diffChildren if newNode.type exists.
 
-4. diffChildren
+        4. diffChildren
 
-Calls:
-createKeyedMap twice (for oldChildren and newChildren).
-updateNewChildren
-removeOldChildren
+        Calls:
+        createKeyedMap twice (for oldChildren and newChildren).
+        updateNewChildren
+        removeOldChildren
 
-5. updateNewChildren
+        5. updateNewChildren
 
-Calls: diff in a loop for each new child.
+        Calls: diff in a loop for each new child.
 
-6. removeOldChildren
+        6. removeOldChildren
 
-Calls: diff in a loop for each old child that was not handled in updateNewChildren.
+        Calls: diff in a loop for each old child that was not handled in updateNewChildren.
 
-7. createRealDOM
+7. createRealDOM: The create real creates the whole VDOM that is then appended to the root/container. Although, not immediately obvious, its recursive in nature. because if you paid attention each element has type, props and children. So in the createRealDOM function, it is our job to first create the element based on the type(using the native document.createElement method), then we add the properties/attributes to the corresponding element, then finally append the children also to the corresponding element - appendChildren() function performs that task for us. Now, here is where it gets interesting if the child is just a primitive value like string or number, then we just create the text-node for it  and just append but if it isn't then we will have to recursively call the createRealDom which will keep appending the children till we have no child left - cringy.
 
 Calls:
 updateProps
