@@ -44,23 +44,6 @@ class MyReact {
   };
 
   // 3. Managing State
-  // useState = (initialValue) => {
-  //   const idx = this.stateIdx;
-
-  //   if (!this.isRendering)
-  //     throw new Error("useState can only be called during rendering");
-
-  //   if (this.state[idx] === undefined) this.state[idx] = initialValue;
-
-  //   const setState = (newValue) => {
-  //     this.state[idx] = newValue;
-  //     this.scheduleUpdate();
-  //   };
-
-  //   this.stateIdx++;
-  //   return [this.state[idx], setState];
-  // };
-
   useState = (initialValue) => {
     const idx = this.stateIdx;
 
@@ -70,13 +53,9 @@ class MyReact {
     if (this.state[idx] === undefined) this.state[idx] = initialValue;
 
     const setState = (newValue) => {
-      if (typeof newValue === "function") {
-
-        this.state[idx] = newValue(this.state[idx]);
-      } else {
-        this.state[idx] = newValue;
-      }
-      this.scheduleUpdate();
+      this.state[idx] =
+        (typeof newValue === "function") ? newValue(this.state[idx]) : newValue;
+      this.processUpdate();
     };
 
     this.stateIdx++;
@@ -148,26 +127,14 @@ class MyReact {
     });
   };
 
-  // scheduleUpdate = () => {
-  //   if (!this.isUpdateScheduled) {
-  //     this.isUpdateScheduled = true;
-  //     requestAnimationFrame(() => this.processUpdate());
-  //   }
-  // };
-  scheduleUpdate = () => {
+  processUpdate = () => {
     if (!this.isUpdateScheduled) {
       this.isUpdateScheduled = true;
-      // Use requestAnimationFrame to schedule the update
       requestAnimationFrame(() => {
         this.isUpdateScheduled = false;
-        this.processUpdate();
+        this.render();
       });
     }
-  };
-
-  processUpdate = () => {
-    this.render();
-    // this.isUpdateScheduled = false;
   };
 
   render = (app = App, container) => {
