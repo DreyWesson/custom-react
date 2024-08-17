@@ -1,6 +1,6 @@
 export const createKeyedMap = (children) => {
   return children.reduce((acc, child, index) => {
-    if (child && child.key !== null) acc[child.key] = child;
+    if (child && child.key != null) acc[child.key] = child;
     else acc[index] = child;
     return acc;
   }, {});
@@ -49,7 +49,6 @@ export const addNewProps = (domElement, oldProps, newProps) => {
       for (let styleName in newStyle) {
         let styleValue = newStyle[styleName];
         
-       
         if (typeof styleValue === 'function') {
           styleValue = styleValue();
         }
@@ -63,7 +62,6 @@ export const addNewProps = (domElement, oldProps, newProps) => {
     }
   }
 };
-
 
 export const removeProp = (domElement, name, value) => {
   if (name.startsWith("on")) {
@@ -82,20 +80,17 @@ export const setProp = (domElement, name, value) => {
   if (name.startsWith("on")) {
     const eventType = name.toLowerCase().substring(2);
 
-    // Remove the previous event listener
     const oldValue = domElement._eventListeners && domElement._eventListeners[name];
     if (oldValue) {
       domElement.removeEventListener(eventType, oldValue);
     }
 
-    // Attach the new event listener
     domElement.addEventListener(eventType, value);
 
-    // Store the event listener reference
     domElement._eventListeners = domElement._eventListeners || {};
     domElement._eventListeners[name] = value;
   } else if (name === "style") {
-    Object.assign(domElement.style, value || {});
+    domElement.style.cssText = value;
   } else if (name in domElement) {
     domElement[name] = value;
   } else {
@@ -103,9 +98,6 @@ export const setProp = (domElement, name, value) => {
   }
 };
 
-export const isPropChanged = (oldProp, newProp) => {
-  if (typeof oldProp === "object" && typeof newProp === "object") {
-    return JSON.stringify(oldProp) !== JSON.stringify(newProp);
-  }
-  return oldProp !== newProp;
+export const isPropChanged = (oldValue, newValue) => {
+  return oldValue !== newValue;
 };
