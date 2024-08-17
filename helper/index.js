@@ -16,53 +16,6 @@ export const hasNodeChanged = (node1, node2) => {
   );
 };
 
-export const updateProps = (domElement, oldProps, newProps) => {
-  removeOldProps(domElement, oldProps, newProps);
-  addNewProps(domElement, oldProps, newProps);
-};
-
-export const removeOldProps = (domElement, oldProps, newProps) => {
-  for (let name in oldProps) {
-    if (name === "children") continue;
-
-    if (name === "style") {
-      const oldStyle = oldProps[name] || {};
-      const newStyle = newProps[name] || {};
-      for (let styleName in oldStyle) {
-        if (!(styleName in newStyle)) {
-          domElement.style[styleName] = "";
-        }
-      }
-    } else if (!(name in newProps)) {
-      removeProp(domElement, name, oldProps[name]);
-    }
-  }
-};
-
-export const addNewProps = (domElement, oldProps, newProps) => {
-  for (let name in newProps) {
-    if (name === "children") continue;
-
-    if (name === "style") {
-      const oldStyle = oldProps[name] || {};
-      const newStyle = newProps[name] || {};
-      for (let styleName in newStyle) {
-        let styleValue = newStyle[styleName];
-        
-        if (typeof styleValue === 'function') {
-          styleValue = styleValue();
-        }
-
-        if (isPropChanged(oldStyle[styleName], styleValue)) {
-          domElement.style[styleName] = styleValue;
-        }
-      }
-    } else if (isPropChanged(oldProps[name], newProps[name])) {
-      setProp(domElement, name, newProps[name]);
-    }
-  }
-};
-
 export const removeProp = (domElement, name, value) => {
   if (name.startsWith("on")) {
     const eventType = name.toLowerCase().substring(2);
@@ -76,19 +29,62 @@ export const removeProp = (domElement, name, value) => {
   }
 };
 
+export const updateProps = (domElement, oldProps, newProps) => {
+  removeOldProps(domElement, oldProps, newProps);
+  addNewProps(domElement, oldProps, newProps);
+};
+
+export const addNewProps = (domElement, oldProps, newProps) => {
+  for (let name in newProps) {
+    if (name === "children") continue;
+
+    if (name === "style") {
+      // Handle the style attribute separately
+      const oldStyle = oldProps[name] || {};
+      const newStyle = newProps[name] || {};
+      for (let styleName in newStyle) {
+        if (oldStyle[styleName] !== newStyle[styleName]) {
+          domElement.style[styleName] = newStyle[styleName];
+        }
+      }
+    } else if (name === "value" && domElement.tagName === "INPUT") {
+      // Ensure the input's value property is updated
+      if (domElement.value !== newProps[name]) {
+        domElement.value = newProps[name] || "";
+      }
+      // Update the value attribute for consistency
+      domElement.setAttribute("value", newProps[name] || "");
+    } else if (isPropChanged(oldProps[name], newProps[name])) {
+      setProp(domElement, name, newProps[name]);
+    }
+  }
+};
+
+export const removeOldProps = (domElement, oldProps, newProps) => {
+  for (let name in oldProps) {
+    if (name === "children") continue;
+
+    if (name === "style") {
+      // Remove any old styles not present in newProps
+      const oldStyle = oldProps[name] || {};
+      const newStyle = newProps[name] || {};
+      for (let styleName in oldStyle) {
+        if (!(styleName in newStyle)) {
+          domElement.style[styleName] = "";
+        }
+      }
+    } else if (!(name in newProps)) {
+      removeProp(domElement, name, oldProps[name]);
+    }
+  }
+};
+
 export const setProp = (domElement, name, value) => {
   if (name.startsWith("on")) {
     const eventType = name.toLowerCase().substring(2);
-
-    const oldValue = domElement._eventListeners && domElement._eventListeners[name];
-    if (oldValue) {
-      domElement.removeEventListener(eventType, oldValue);
-    }
-
+    domElement.removeEventListener(eventType, domElement[name]);
     domElement.addEventListener(eventType, value);
-
-    domElement._eventListeners = domElement._eventListeners || {};
-    domElement._eventListeners[name] = value;
+    domElement[name] = value;
   } else if (name === "style") {
     domElement.style.cssText = value;
   } else if (name in domElement) {
@@ -97,6 +93,7 @@ export const setProp = (domElement, name, value) => {
     domElement.setAttribute(name, value);
   }
 };
+
 
 export const isPropChanged = (oldValue, newValue) => {
   return oldValue !== newValue;

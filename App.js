@@ -48,9 +48,7 @@ export const App = () => {
 
   const toggleColor = (e) => {
     e.preventDefault();
-    console.log('Before Toggle:', count, color);
     setColor((prevColor) => (prevColor === "blue" ? "green" : "blue"));
-    console.log('After Toggle:', count, color);
   };
 
   const handleInputChange = (e) => setInputValue(e.target.value);
@@ -64,7 +62,7 @@ export const App = () => {
 
   const handleComplexEvent = () => {
     setCount(count + 5);
-    setColor("red");
+    setColor((prevColor) => (prevColor === "blue" ? "green" : "blue"));
   };
 
   return (
@@ -84,7 +82,7 @@ export const App = () => {
             <h1>Count: {count}</h1>
             <Button onClick={() => setCount(count + 1)} style={{ marginRight: "10px" }}>Increment</Button>
             <Button onClick={toggleColor}>Toggle Color</Button>
-            <Button onClick={handleComplexEvent} style={{ marginLeft: "10px" }}>Increment by 5 and change color to red</Button>
+            <Button onClick={handleComplexEvent} style={{ marginLeft: "10px" }}>Increment by 5 and toggle color</Button>
           </div>
           <ul>
             {items.map((item, index) => <li key={index}>{item}</li>)}
