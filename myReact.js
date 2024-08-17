@@ -80,31 +80,84 @@ class MyReact {
         (typeof newValue === "function") ? newValue(this.state[idx]) : newValue;
       this.processUpdate();
     };
-
+    console.log(`Rendering: idx=${idx}, state=`, this.state);
     this.stateIdx++;
     return [this.state[idx], setState];
   };
 
   // 4. Diffing and Updating the DOM
-  diff = (parent, oldNode, newNode, index = 0) => {
-    const existingNode = parent.childNodes[index];
+//   diff = (parent, oldNode, newNode, index = 0) => {
+//     const existingNode = parent.childNodes[index];
 
-    if (!newNode) return existingNode && parent.removeChild(existingNode);
+//     if (!newNode) {
+//         return existingNode && parent.removeChild(existingNode);
+//     }
 
-    if (!oldNode) return parent.appendChild(this.createRealDOM(newNode));
+//     if (!oldNode) {
+//         return parent.appendChild(this.createRealDOM(newNode));
+//     }
 
-    if (hasNodeChanged(oldNode, newNode))
-      return parent.replaceChild(this.createRealDOM(newNode), existingNode);
+//     if (hasNodeChanged(oldNode, newNode)) {
+//         const newDomNode = this.createRealDOM(newNode);
+//         if (existingNode && newDomNode) {
+//             return parent.replaceChild(newDomNode, existingNode);
+//         } else if (newDomNode) {
+//             return parent.appendChild(newDomNode);
+//         }
+//     }
 
-    if (newNode.type) {
+//     if (newNode.type) {
+//         updateProps(existingNode, oldNode.props, newNode.props);
+//         this.diffChildren(
+//             existingNode,
+//             oldNode.props.children,
+//             newNode.props.children
+//         );
+//     }
+// };
+
+diff = (parent, oldNode, newNode, index = 0) => {
+  const existingNode = parent.childNodes[index];
+
+
+  if (!newNode) {
+      return existingNode && parent.removeChild(existingNode);
+  }
+
+  if (!oldNode) {
+      return parent.appendChild(this.createRealDOM(newNode));
+  }
+
+  // Handling text nodes (numbers and strings)
+  if (typeof oldNode === "string" || typeof oldNode === "number") {
+      if (typeof newNode === "string" || typeof newNode === "number") {
+          if (existingNode.textContent !== String(newNode)) {
+              existingNode.textContent = String(newNode);
+          }
+          return;
+      } else {
+          const newDomNode = this.createRealDOM(newNode);
+          return parent.replaceChild(newDomNode, existingNode);
+      }
+  }
+
+  if (hasNodeChanged(oldNode, newNode)) {
+      const newDomNode = this.createRealDOM(newNode);
+      return parent.replaceChild(newDomNode, existingNode);
+  }
+
+  if (newNode.type) {
       updateProps(existingNode, oldNode.props, newNode.props);
       this.diffChildren(
-        existingNode,
-        oldNode.props.children,
-        newNode.props.children
+          existingNode,
+          oldNode.props.children,
+          newNode.props.children
       );
-    }
-  };
+  }
+};
+
+
+
 
   diffChildren = (parent, oldChildren = [], newChildren = []) => {
     const oldChildrenKeyed = createKeyedMap(oldChildren);
@@ -170,6 +223,8 @@ class MyReact {
     this.isRendering = false;
     this.stateIdx = 0;
   };
+
+
 }
 
 const myReactInstance = new MyReact();
