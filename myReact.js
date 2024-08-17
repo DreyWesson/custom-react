@@ -11,33 +11,17 @@ class MyReact {
     this.isUpdateScheduled = false;
   }
 
-  // createElement = (type, props = {}, ...children) => {
-  //   if (typeof type === 'function') {
-  //     return type({ ...props, children });
-  //   }
-
-  //   return {
-  //     type,
-  //     props: { ...props, children: children.flat() },
-  //     key: props.key || null,
-  //   };
-  // };
   createElement = (type, props = {}, ...children) => {
-    // Ensure props is an object, defaulting to an empty object if it's null or undefined
     props = props || {};
   
-    // Ensure key is defined and not null
     const { key = null, ...restProps } = props;
   
-    if (typeof type === 'function') {
-      return type({ ...restProps, children });
-    }
-  
-    return {
+
+    return (typeof type === 'function') ?type({ ...restProps, children }) : ({
       type,
       props: { ...restProps, children: children.flat() },
       key,
-    };
+    });
   };
   
   
