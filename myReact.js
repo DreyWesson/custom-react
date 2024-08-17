@@ -1,7 +1,7 @@
 import { App } from "./App.jsx";
 import {createKeyedMap, hasNodeChanged, updateProps} from "./helper/index"
 
-class MyReact {
+class MyReactBase { // Manages state and rendering.
   constructor() {
     this.state = [];
     this.stateIdx = 0;
@@ -11,26 +11,52 @@ class MyReact {
     this.isUpdateScheduled = false;
   }
 
-  createElement = (type, props = {}, ...children) => {
-    props = props || {};
-    const { key = null, ...restProps } = props;
+  useState = (initialValue) => {
+    const idx = this.stateIdx;
 
-    const normalizedChildren = children.flat().map((child, index) => {
-      if (typeof child === 'object' && child !== null && !child.key) {
-        child.key = index;
-      }
-      return child;
-    });
+    if (!this.isRendering) {
+      throw new Error("useState can only be called during rendering");
+    }
 
-    return typeof type === 'function'
-      ? type({ ...restProps, children: normalizedChildren })
-      : {
-        type,
-        props: { ...restProps, children: normalizedChildren },
-        key,
-      };
+    if (this.state[idx] === undefined) {
+      this.state[idx] = initialValue;
+    }
+
+    const setState = (newValue) => {
+      this.state[idx] = typeof newValue === "function"
+        ? newValue(this.state[idx])
+        : newValue;
+      this.processUpdate();
+    };
+    this.stateIdx++;
+
+    return [this.state[idx], setState];
   };
 
+  processUpdate = () => {
+    if (!this.isUpdateScheduled) {
+      this.isUpdateScheduled = true;
+      requestAnimationFrame(() => {
+        this.isUpdateScheduled = false;
+        this.render();
+      });
+    }
+  };
+
+  render = (app, container) => {
+    this.isRendering = true;
+    this.stateIdx = 0;
+
+    container = container || this.container || document.getElementById("root");
+    this.renderToDOM(app(), container);
+
+    this.isRendering = false;
+    this.stateIdx = 0;
+  };
+}
+
+
+class MyReactDOM extends MyReactBase { // Handles real DOM creation and updating
   createRealDOM = (element) => {
     if (typeof element === "string" || typeof element === "number") {
       return document.createTextNode(String(element));
@@ -70,29 +96,9 @@ class MyReact {
     this.oldVDOM = newVDOM;
     return this;
   };
+}
 
-  useState = (initialValue) => {
-    const idx = this.stateIdx;
-
-    if (!this.isRendering) {
-      throw new Error("useState can only be called during rendering");
-    }
-
-    if (this.state[idx] === undefined) {
-      this.state[idx] = initialValue;
-    }
-
-    const setState = (newValue) => {
-      this.state[idx] = typeof newValue === "function"
-        ? newValue(this.state[idx])
-        : newValue;
-      this.processUpdate();
-    };
-    this.stateIdx++;
-
-    return [this.state[idx], setState];
-  };
-
+class MyReactDiff extends MyReactDOM { // Manages diffing between old and new virtual DOMs
   diff = (parent, oldNode, newNode, index = 0) => {
     const existingNode = parent.childNodes[index];
 
@@ -174,17 +180,33 @@ class MyReact {
       }
     });
   };
+}
 
-  processUpdate = () => {
-    if (!this.isUpdateScheduled) {
-      this.isUpdateScheduled = true;
-      requestAnimationFrame(() => {
-        this.isUpdateScheduled = false;
-        this.render();
-      });
-    }
+
+class MyReact extends MyReactDiff { // Main class that exports the public API
+  constructor() {
+    super();
+  }
+
+  createElement = (type, props = {}, ...children) => {
+    props = props || {};
+    const { key = null, ...restProps } = props;
+
+    const normalizedChildren = children.flat().map((child, index) => {
+      if (typeof child === 'object' && child !== null && !child.key) {
+        child.key = index;
+      }
+      return child;
+    });
+
+    return typeof type === 'function'
+      ? type({ ...restProps, children: normalizedChildren })
+      : {
+        type,
+        props: { ...restProps, children: normalizedChildren },
+        key,
+      };
   };
-
 
   render = (app = App, container) => {
     this.isRendering = true;
@@ -196,7 +218,6 @@ class MyReact {
     this.isRendering = false;
     this.stateIdx = 0;
   };
-
 }
 
 const myReactInstance = new MyReact();
@@ -204,5 +225,3 @@ const myReactInstance = new MyReact();
 export const createElement = myReactInstance.createElement;
 export const useState = myReactInstance.useState;
 export const render = myReactInstance.render;
-
-

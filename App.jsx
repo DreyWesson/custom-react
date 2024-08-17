@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import { createElement, useState } from "./myReact";
 
 // Custom hook for toggling values
