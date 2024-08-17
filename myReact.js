@@ -1,4 +1,4 @@
-import { App } from "./App";
+import { App } from "./App.jsx";
 import {createKeyedMap, hasNodeChanged, updateProps} from "./helper/index"
 
 class MyReact {
