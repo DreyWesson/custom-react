@@ -1,5 +1,5 @@
 import { App } from "./App.jsx";
-import {createKeyedMap, hasNodeChanged, updateProps} from "./helper/index"
+import { createKeyedMap, hasNodeChanged, updateProps } from "./helper/index"
 
 class MyReactBase { // Manages state and rendering.
   constructor() {
@@ -61,10 +61,10 @@ class MyReactDOM extends MyReactBase { // Handles real DOM creation and updating
     if (typeof element === "string" || typeof element === "number") {
       return document.createTextNode(String(element));
     }
-
     if (!element || !element.type) {
       return document.createTextNode('');
     }
+
 
     if (typeof element.type === 'function') {
       const renderedElement = element.type(element.props);
@@ -81,17 +81,28 @@ class MyReactDOM extends MyReactBase { // Handles real DOM creation and updating
 
   appendChildren = (domElement, children) => {
     children
-      .filter(child => child != null)
+      .filter(
+        child =>
+          child != null &&
+          child !== false &&
+          child !== "" &&
+          typeof child !== "boolean"
+      )
       .map(this.createRealDOM)
       .forEach((child) => domElement.appendChild(child));
   };
 
+
   renderToDOM = (newVDOM, root) => {
     this.container = root;
 
-    this.oldVDOM
-      ? this.diff(root, this.oldVDOM, newVDOM)
-      : root.appendChild(this.createRealDOM(newVDOM));
+    console.log({ oldDom: this.oldVDOM, newVDOM })
+
+    if (!this.oldVDOM) {
+      root.appendChild(this.createRealDOM(newVDOM));
+    } else {
+      this.diff(root, this.oldVDOM, newVDOM);
+    }
 
     this.oldVDOM = newVDOM;
     return this;
@@ -115,7 +126,7 @@ class MyReactDiff extends MyReactDOM { // Manages diffing between old and new vi
     }
 
     if (!newNode) {
-      if (existingNode) 
+      if (existingNode)
         parent.removeChild(existingNode);
       return;
     }
