@@ -1,7 +1,7 @@
 import { App } from "./App.jsx";
-import { createKeyedMap, hasNodeChanged, updateProps } from "./helper/index"
+import { createKeyedMap, hasNodeChanged, updateProps } from "./helper/index";
 
-class MyReactBase { // Manages state and rendering.
+class MyReact {
   constructor() {
     this.state = [];
     this.stateIdx = 0;
@@ -11,6 +11,7 @@ class MyReactBase { // Manages state and rendering.
     this.isUpdateScheduled = false;
   }
 
+  // useState hook
   useState = (initialValue) => {
     const idx = this.stateIdx;
 
@@ -23,16 +24,15 @@ class MyReactBase { // Manages state and rendering.
     }
 
     const setState = (newValue) => {
-      this.state[idx] = typeof newValue === "function"
-        ? newValue(this.state[idx])
-        : newValue;
+      this.state[idx] = typeof newValue === "function" ? newValue(this.state[idx]) : newValue;
       this.processUpdate();
     };
-    this.stateIdx++;
 
+    this.stateIdx++;
     return [this.state[idx], setState];
   };
 
+  // Handle state updates
   processUpdate = () => {
     if (!this.isUpdateScheduled) {
       this.isUpdateScheduled = true;
@@ -43,7 +43,8 @@ class MyReactBase { // Manages state and rendering.
     }
   };
 
-  render = (app, container) => {
+  // Main render method
+  render = (app = App, container) => {
     this.isRendering = true;
     this.stateIdx = 0;
 
@@ -53,10 +54,21 @@ class MyReactBase { // Manages state and rendering.
     this.isRendering = false;
     this.stateIdx = 0;
   };
-}
 
+  // Render virtual DOM to actual DOM
+  renderToDOM = (newVDOM, root) => {
+    this.container = root;
 
-class MyReactDOM extends MyReactBase { // Handles real DOM creation and updating
+    if (!this.oldVDOM) {
+      root.appendChild(this.createRealDOM(newVDOM));
+    } else {
+      this.diff(root, this.oldVDOM, newVDOM);
+    }
+
+    this.oldVDOM = newVDOM;
+  };
+
+  // Create real DOM from virtual DOM
   createRealDOM = (element) => {
     if (typeof element === "string" || typeof element === "number") {
       return document.createTextNode(String(element));
@@ -64,7 +76,6 @@ class MyReactDOM extends MyReactBase { // Handles real DOM creation and updating
     if (!element || !element.type) {
       return document.createTextNode('');
     }
-
 
     if (typeof element.type === 'function') {
       const renderedElement = element.type(element.props);
@@ -79,10 +90,11 @@ class MyReactDOM extends MyReactBase { // Handles real DOM creation and updating
     return domElement;
   };
 
+  // Append children elements to a DOM element
   appendChildren = (domElement, children) => {
     children
       .filter(
-        child =>
+        (child) =>
           child != null &&
           child !== false &&
           child !== "" &&
@@ -92,24 +104,7 @@ class MyReactDOM extends MyReactBase { // Handles real DOM creation and updating
       .forEach((child) => domElement.appendChild(child));
   };
 
-
-  renderToDOM = (newVDOM, root) => {
-    this.container = root;
-
-    console.log({ oldDom: this.oldVDOM, newVDOM })
-
-    if (!this.oldVDOM) {
-      root.appendChild(this.createRealDOM(newVDOM));
-    } else {
-      this.diff(root, this.oldVDOM, newVDOM);
-    }
-
-    this.oldVDOM = newVDOM;
-    return this;
-  };
-}
-
-class MyReactDiff extends MyReactDOM { // Manages diffing between old and new virtual DOMs
+  // Diffing algorithm to compare old and new virtual DOM
   diff = (parent, oldNode, newNode, index = 0) => {
     const existingNode = parent.childNodes[index];
 
@@ -126,8 +121,7 @@ class MyReactDiff extends MyReactDOM { // Manages diffing between old and new vi
     }
 
     if (!newNode) {
-      if (existingNode)
-        parent.removeChild(existingNode);
+      if (existingNode) parent.removeChild(existingNode);
       return;
     }
 
@@ -148,6 +142,7 @@ class MyReactDiff extends MyReactDOM { // Manages diffing between old and new vi
     }
   };
 
+  // Diffing for child nodes
   diffChildren = (parent, oldChildren = [], newChildren = []) => {
     const oldChildrenKeyed = createKeyedMap(oldChildren);
     const newChildrenKeyed = createKeyedMap(newChildren);
@@ -159,14 +154,10 @@ class MyReactDiff extends MyReactDOM { // Manages diffing between old and new vi
       oldChildrenKeyed
     );
 
-    this.removeOldChildren(
-      parent,
-      oldChildren,
-      newChildrenKeyed,
-      handledIndices
-    );
+    this.removeOldChildren(parent, oldChildren, newChildrenKeyed, handledIndices);
   };
 
+  // Update new children in the DOM
   updateNewChildren = (parent, newChildren, oldChildren, oldChildrenKeyed) => {
     const handledIndices = new Set();
 
@@ -179,26 +170,16 @@ class MyReactDiff extends MyReactDOM { // Manages diffing between old and new vi
     return handledIndices;
   };
 
-  removeOldChildren = (
-    parent,
-    oldChildren,
-    newChildrenKeyed,
-    handledIndices
-  ) => {
+  // Remove old children from the DOM
+  removeOldChildren = (parent, oldChildren, newChildrenKeyed, handledIndices) => {
     oldChildren.forEach((oldChild, i) => {
       if (!handledIndices.has(i) && !newChildrenKeyed[oldChild?.key]) {
         this.diff(parent, oldChild, null, i);
       }
     });
   };
-}
 
-
-class MyReact extends MyReactDiff { // Main class that exports the public API
-  constructor() {
-    super();
-  }
-
+  // Create a virtual DOM element
   createElement = (type, props = {}, ...children) => {
     props = props || {};
     const { key = null, ...restProps } = props;
@@ -218,17 +199,6 @@ class MyReact extends MyReactDiff { // Main class that exports the public API
         key,
       };
   };
-
-  render = (app = App, container) => {
-    this.isRendering = true;
-    this.stateIdx = 0;
-
-    container = container || this.container || document.getElementById("root");
-    this.renderToDOM(app(), container);
-
-    this.isRendering = false;
-    this.stateIdx = 0;
-  };
 }
 
 const myReactInstance = new MyReact();
@@ -236,3 +206,4 @@ const myReactInstance = new MyReact();
 export const createElement = myReactInstance.createElement;
 export const useState = myReactInstance.useState;
 export const render = myReactInstance.render;
+

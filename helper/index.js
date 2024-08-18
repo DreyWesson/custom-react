@@ -39,7 +39,6 @@ export const addNewProps = (domElement, oldProps, newProps) => {
     if (name === "children") continue;
 
     if (name === "style") {
-      // Handle the style attribute separately
       const oldStyle = oldProps[name] || {};
       const newStyle = newProps[name] || {};
       for (let styleName in newStyle) {
@@ -48,11 +47,9 @@ export const addNewProps = (domElement, oldProps, newProps) => {
         }
       }
     } else if (name === "value" && domElement.tagName === "INPUT") {
-      // Ensure the input's value property is updated
       if (domElement.value !== newProps[name]) {
         domElement.value = newProps[name] || "";
       }
-      // Update the value attribute for consistency
       domElement.setAttribute("value", newProps[name] || "");
     } else if (isPropChanged(oldProps[name], newProps[name])) {
       setProp(domElement, name, newProps[name]);
@@ -65,7 +62,6 @@ export const removeOldProps = (domElement, oldProps, newProps) => {
     if (name === "children") continue;
 
     if (name === "style") {
-      // Remove any old styles not present in newProps
       const oldStyle = oldProps[name] || {};
       const newStyle = newProps[name] || {};
       for (let styleName in oldStyle) {
