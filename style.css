@@ -1,0 +1,15 @@
+.grid-container {
+  display: grid;
+  height: 200px;
+  width: 200px;
+  place-items: center;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+}
+
+.grid-item {
+  background-color: #007BFF;
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+}
