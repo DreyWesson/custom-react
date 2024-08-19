@@ -108,12 +108,13 @@ processUpdate = () => {
 
 
 Logic:
-1. RenderApp: This is the function that starts the whole process of creating our application. It keeps a state to note that the rendering process has started and resets the start index to zero so as to prepare for the next render cycle. Then calls the render() function with the created/updated DOM and container to inserts it. When this is done it resets the endering to false and stateIdx to zero in readiness for the next rendering cycle.
+1. render: This is the function that starts the whole process of creating our application. It keeps a state to note that the rendering process has started and resets the start index to zero so as to prepare for the next render cycle. Then tries to call the renderToDOM() which will render the created/updated virtual DOM in the parent container. When this is done it resets the rendering to false and stateIdx to zero in readiness for the next rendering cycle.
 
-2. render: These updates the DOM with the new virtual DOM we want to insert and the container we wanna insert it.
-renderApp. So, for optimization, we don't want to just dump the newly created/updated DOM but we wanna compare and see what has changed and update just that. Also, create new DOM only if the DOM is empty
+2. renderToDOM: These updates the DOM with the new virtual DOM we want to insert and the container we wanna insert it.
+renderApp. So, for optimization, we don't want to just dump the newly created/updated DOM but we wanna compare and see what has changed and update just that. Also, create new DOM only if the DOM is empty. Then we finally update the newly created DOM as old in preparation for next cycle.
 
-Calls: diff if this.oldVDOM exists; otherwise, createRealDOM and appends it to the container.
+              1. createRealDOM: The create real creates the whole VDOM that is then appended to the root/container. Although, not immediately obvious, its recursive in nature. because if you paid attention each element has type, props and children. So in the createRealDOM function, it is our job to first create the element based on the type. To do this, we gotta determine which element type we are trying to create with our good old document methods, particularly - createTextNode and createElement. So, we cannot add none text and none html tag, so we check the element if it is string or number -in such case we create the text with the document.createTextNode. Also, in cases, no element is passed or the element type is undefined then we just create an empty text, then in a case where a function is passed as the element then we gotta handle differently by assuming its a functional component which will be returning html dom. And if, all this doesn't happen then we assume its an HTML tag, and it that case create the element type (ie div, span etc). At this point, it's important to destructure the children away from the props before we add/update its properties/attributes by looping through the props and assigning it to the element. Now, here is where it gets interesting if the child is just a primitive value (like string, number) or HTML tag then for it and just append but if it isn't then we will have to recursively call the createRealDom which will keep appending the children till we have no child left - cringy.
+              
 
         a.) diff
 
@@ -137,7 +138,6 @@ Calls: diff if this.oldVDOM exists; otherwise, createRealDOM and appends it to t
 
         Calls: diff in a loop for each old child that was not handled in updateNewChildren.
 
-7. createRealDOM: The create real creates the whole VDOM that is then appended to the root/container. Although, not immediately obvious, its recursive in nature. because if you paid attention each element has type, props and children. So in the createRealDOM function, it is our job to first create the element based on the type(using the native document.createElement method), then we add the properties/attributes to the corresponding element, then finally append the children also to the corresponding element - appendChildren() function performs that task for us. Now, here is where it gets interesting if the child is just a primitive value like string or number, then we just create the text-node for it  and just append but if it isn't then we will have to recursively call the createRealDom which will keep appending the children till we have no child left - cringy.
 
 Calls:
 updateProps

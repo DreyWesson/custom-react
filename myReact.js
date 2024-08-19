@@ -24,7 +24,8 @@ class MyReact {
     }
 
     const setState = (newValue) => {
-      this.state[idx] = typeof newValue === "function" ? newValue(this.state[idx]) : newValue;
+      this.state[idx] =
+        typeof newValue === "function" ? newValue(this.state[idx]) : newValue;
       this.processUpdate();
     };
 
@@ -59,14 +60,21 @@ class MyReact {
   renderToDOM = (newVDOM, root) => {
     this.container = root;
 
-    if (!this.oldVDOM) {
-      root.appendChild(this.createRealDOM(newVDOM));
-    } else {
-      this.diff(root, this.oldVDOM, newVDOM);
-    }
+    if (!this.oldVDOM) root.appendChild(this.createRealDOM(newVDOM));
+    else this.diff(root, this.oldVDOM, newVDOM);
 
     this.oldVDOM = newVDOM;
   };
+
+  handleHTML(element) {
+    const { key, children, ...props } = element.props;
+    const domElement = document.createElement(element.type);
+
+    updateProps(domElement, {}, props);
+    this.appendChildren(domElement, children);
+
+    return domElement;
+  }
 
   // Create real DOM from virtual DOM
   createRealDOM = (element) => {
@@ -74,33 +82,29 @@ class MyReact {
       return document.createTextNode(String(element));
     }
     if (!element || !element.type) {
-      return document.createTextNode('');
+      return document.createTextNode("");
     }
 
-    if (typeof element.type === 'function') {
+    if (typeof element.type === "function") {
       const renderedElement = element.type(element.props);
       return this.createRealDOM(renderedElement);
     }
 
-    const { key, children, ...props } = element.props;
-    const domElement = document.createElement(element.type);
-    updateProps(domElement, {}, props);
-    this.appendChildren(domElement, children);
-
-    return domElement;
+    return this.handleHTML(element);
   };
 
   // Append children elements to a DOM element
   appendChildren = (domElement, children) => {
     children
-      .filter(
-        (child) =>
+      .filter((child) => {
+        return (
           child != null &&
           child !== false &&
           child !== "" &&
           typeof child !== "boolean"
-      )
-      .map(this.createRealDOM)
+        );
+      })
+      .map((child) => this.createRealDOM(child))
       .forEach((child) => domElement.appendChild(child));
   };
 
@@ -108,7 +112,7 @@ class MyReact {
   diff = (parent, oldNode, newNode, index = 0) => {
     const existingNode = parent.childNodes[index];
 
-    if (typeof newNode === 'string' || typeof newNode === 'number') {
+    if (typeof newNode === "string" || typeof newNode === "number") {
       if (existingNode.nodeType === Node.TEXT_NODE) {
         if (existingNode.textContent !== String(newNode)) {
           existingNode.textContent = String(newNode);
@@ -138,7 +142,11 @@ class MyReact {
 
     if (newNode.type) {
       updateProps(existingNode, oldNode.props, newNode.props);
-      this.diffChildren(existingNode, oldNode.props.children, newNode.props.children);
+      this.diffChildren(
+        existingNode,
+        oldNode.props.children,
+        newNode.props.children
+      );
     }
   };
 
@@ -154,7 +162,12 @@ class MyReact {
       oldChildrenKeyed
     );
 
-    this.removeOldChildren(parent, oldChildren, newChildrenKeyed, handledIndices);
+    this.removeOldChildren(
+      parent,
+      oldChildren,
+      newChildrenKeyed,
+      handledIndices
+    );
   };
 
   // Update new children in the DOM
@@ -171,7 +184,12 @@ class MyReact {
   };
 
   // Remove old children from the DOM
-  removeOldChildren = (parent, oldChildren, newChildrenKeyed, handledIndices) => {
+  removeOldChildren = (
+    parent,
+    oldChildren,
+    newChildrenKeyed,
+    handledIndices
+  ) => {
     oldChildren.forEach((oldChild, i) => {
       if (!handledIndices.has(i) && !newChildrenKeyed[oldChild?.key]) {
         this.diff(parent, oldChild, null, i);
@@ -185,19 +203,19 @@ class MyReact {
     const { key = null, ...restProps } = props;
 
     const normalizedChildren = children.flat().map((child, index) => {
-      if (typeof child === 'object' && child !== null && !child.key) {
+      if (typeof child === "object" && child !== null && !child.key) {
         child.key = index;
       }
       return child;
     });
 
-    return typeof type === 'function'
+    return typeof type === "function"
       ? type({ ...restProps, children: normalizedChildren })
       : {
-        type,
-        props: { ...restProps, children: normalizedChildren },
-        key,
-      };
+          type,
+          props: { ...restProps, children: normalizedChildren },
+          key,
+        };
   };
 }
 
@@ -206,4 +224,3 @@ const myReactInstance = new MyReact();
 export const createElement = myReactInstance.createElement;
 export const useState = myReactInstance.useState;
 export const render = myReactInstance.render;
-

@@ -60,7 +60,7 @@ export const addNewProps = (domElement, oldProps, newProps) => {
 export const removeOldProps = (domElement, oldProps, newProps) => {
   for (let name in oldProps) {
     if (name === "children") continue;
-
+    
     if (name === "style") {
       const oldStyle = oldProps[name] || {};
       const newStyle = newProps[name] || {};

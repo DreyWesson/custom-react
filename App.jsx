@@ -1,4 +1,4 @@
-import { createElement, useState } from "./myReact";
+import { createElement, render, useState } from "./myReact";
 
 // Custom hook for toggling values
 const useToggle = (initialValue) => {
@@ -49,10 +49,25 @@ const Footer = () => {
   );
 };
 
+// Define a functional component
+function Greeting(props) {
+  return (
+    <div>
+      <h4>Hello {props.name}</h4>
+    </div>
+  );
+}
+
+// Using the functional component within a virtual DOM structure
+const vDOM = {
+  type: Greeting,
+  props: { name: "John" },
+};
+
 // Main App component
 export const App = () => {
   const [count, setCount] = useState(0);
-  const [color, setColor] = useState("blue");
+  const [color, setColor] = useState("dodgerblue");
   const [inputValue, setInputValue] = useState("");
   const [items] = useState(["Home", "About", "Contact"]);
   const [user, setUser] = useState({ name: "John", age: 25 });
@@ -61,7 +76,9 @@ export const App = () => {
 
   const toggleColor = (e) => {
     e.preventDefault();
-    setColor((prevColor) => (prevColor === "blue" ? "green" : "blue"));
+    setColor((prevColor) =>
+      prevColor === "dodgerblue" ? "#569e56" : "dodgerblue"
+    );
   };
 
   const handleInputChange = (e) => setInputValue(e.target.value);
@@ -75,24 +92,45 @@ export const App = () => {
 
   const handleComplexEvent = () => {
     setCount(count + 5);
-    setColor((prevColor) => (prevColor === "blue" ? "green" : "blue"));
+    setColor((prevColor) =>
+      prevColor === "dodgerblue" ? "#569e56" : "dodgerblue"
+    );
   };
 
-  return (
+  return false ? (
+    <div style={{ marginTop: "20px" }}>
+      <Button onClick={toggleMessage} style={{ marginRight: "10px" }}>
+        Toggle Message
+      </Button>
+      {showMessage && <p>This is a conditional message!</p>}
+    </div>
+  ) : (
     <div
       style={{
         maxWidth: "500px",
-        margin: "10% auto",
+        margin: "0 auto",
         border: "1px solid black",
         padding: "10px",
       }}
     >
       <Header color={color} />
-      <nav style={{ margin: "10px 0" }}>
-        <ul>
+      <nav style={{ margin: "0" }}>
+        <h2>Testing list</h2>
+        <ul
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            width: "150px",
+            margin: "0",
+            padding: "0",
+          }}
+        >
           {items &&
             items.map((item, idx) => (
-              <li key={idx}>
+              <li
+                key={idx}
+                style={{ listStyle: "none", textDecoration: "none" }}
+              >
                 <a href={`#${item.toLowerCase()}`}>{item}</a>
               </li>
             ))}
@@ -115,6 +153,10 @@ export const App = () => {
             <Button onClick={handleComplexEvent} style={{ marginLeft: "10px" }}>
               Increment by 5 and toggle color
             </Button>
+          </div>
+          <div>
+            <h2>Testing function as children</h2>
+            <div>{vDOM}</div>
           </div>
           <div style={{ marginTop: "20px" }}>
             <Button onClick={toggleMessage} style={{ marginRight: "10px" }}>
