@@ -5,13 +5,14 @@ class MyReact {
   constructor() {
     this.state = [];
     this.stateIdx = 0;
+    this.effects = [];
+    this.effectIdx = 0;
     this.isRendering = false;
     this.oldVDOM = null;
     this.container = null;
     this.isUpdateScheduled = false;
   }
 
-  // useState hook
   useState = (initialValue) => {
     const idx = this.stateIdx;
 
@@ -24,16 +25,60 @@ class MyReact {
     }
 
     const setState = (newValue) => {
-      this.state[idx] =
+      const newState =
         typeof newValue === "function" ? newValue(this.state[idx]) : newValue;
-      this.processUpdate();
+      if (this.state[idx] !== newState) {
+        this.state[idx] = newState;
+        this.processUpdate();
+      }
     };
 
     this.stateIdx++;
     return [this.state[idx], setState];
   };
 
-  // Handle state updates
+useEffect = (callback, dependencies = []) => {
+  const idx = this.effectIdx;
+
+  if (!this.isRendering) {
+    throw new Error("useEffect can only be called during rendering");
+  }
+
+  const previousEffect = this.effects[idx];
+  const depsChanged = previousEffect
+    ? !dependencies.every((dep, i) => dep === previousEffect.deps[i])
+    : true;
+
+  if (depsChanged) {
+    if (previousEffect?.cleanup) {
+      previousEffect.cleanup();
+    }
+
+    const cleanup = callback();
+    this.effects[idx] = {
+      deps: dependencies,
+      callback,
+      cleanup: typeof cleanup === "function" ? cleanup : undefined,
+    };
+  }
+
+  this.effectIdx++;
+};
+
+  runEffects = () => {
+    this.effects.forEach((effect, idx) => {
+      if (effect) {
+        if (typeof effect.cleanup === "function") {
+          effect.cleanup();
+        }
+
+        const newCleanup = effect.callback ? effect.callback() : undefined;
+        this.effects[idx].cleanup =
+          typeof newCleanup === "function" ? newCleanup : undefined;
+      }
+    });
+  };
+  
   processUpdate = () => {
     if (!this.isUpdateScheduled) {
       this.isUpdateScheduled = true;
@@ -44,19 +89,18 @@ class MyReact {
     }
   };
 
-  // Main render method
   render = (app = App, container) => {
     this.isRendering = true;
     this.stateIdx = 0;
+    this.effectIdx = 0;
 
     container = container || this.container || document.getElementById("root");
     this.renderToDOM(app(), container);
 
     this.isRendering = false;
-    this.stateIdx = 0;
+    this.runEffects();
   };
 
-  // Render virtual DOM to actual DOM
   renderToDOM = (newVDOM, root) => {
     this.container = root;
 
@@ -76,7 +120,6 @@ class MyReact {
     return domElement;
   }
 
-  // Create real DOM from virtual DOM
   createRealDOM = (element) => {
     if (typeof element === "string" || typeof element === "number") {
       return document.createTextNode(String(element));
@@ -93,7 +136,6 @@ class MyReact {
     return this.handleHTML(element);
   };
 
-  // Append children elements to a DOM element
   appendChildren = (domElement, children) => {
     children
       .filter((child) => {
@@ -108,7 +150,6 @@ class MyReact {
       .forEach((child) => domElement.appendChild(child));
   };
 
-  // Diffing algorithm to compare old and new virtual DOM
   diff = (parent, oldNode, newNode, index = 0) => {
     const existingNode = parent.childNodes[index];
 
@@ -150,7 +191,6 @@ class MyReact {
     }
   };
 
-  // Diffing for child nodes
   diffChildren = (parent, oldChildren = [], newChildren = []) => {
     const oldChildrenKeyed = createKeyedMap(oldChildren);
     const newChildrenKeyed = createKeyedMap(newChildren);
@@ -170,7 +210,6 @@ class MyReact {
     );
   };
 
-  // Update new children in the DOM
   updateNewChildren = (parent, newChildren, oldChildren, oldChildrenKeyed) => {
     const handledIndices = new Set();
 
@@ -183,7 +222,6 @@ class MyReact {
     return handledIndices;
   };
 
-  // Remove old children from the DOM
   removeOldChildren = (
     parent,
     oldChildren,
@@ -197,7 +235,6 @@ class MyReact {
     });
   };
 
-  // Create a virtual DOM element
   createElement = (type, props = {}, ...children) => {
     props = props || {};
     const { key = null, ...restProps } = props;
@@ -224,3 +261,4 @@ const myReactInstance = new MyReact();
 export const createElement = myReactInstance.createElement;
 export const useState = myReactInstance.useState;
 export const render = myReactInstance.render;
+export const useEffect = myReactInstance.useEffect;

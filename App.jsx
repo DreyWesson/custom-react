@@ -1,4 +1,4 @@
-import { createElement, render, useState } from "./myReact";
+import { createElement, useState, useEffect } from "./myReact";
 
 // Custom hook for toggling values
 const useToggle = (initialValue) => {
@@ -30,12 +30,41 @@ const Input = ({ value, onInput, placeholder }) => {
 
 // Header component
 const Header = ({ color }) => {
+  const [items] = useState(["Home", "About", "Contact"]);
   return (
     <header
       id="main-header"
       style={{ backgroundColor: color, padding: "10px", textAlign: "center" }}
     >
       <h1>Welcome to My React Page</h1>
+      <nav style={{ margin: "0" }}>
+        <h3>Testing list</h3>
+        <ul
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            width: "150px",
+            margin: "0 auto",
+            padding: "0",
+          }}
+        >
+          {items &&
+            items.map((item, idx) => (
+              <li key={idx} style={{ listStyle: "none" }}>
+                <a
+                  style={{
+                    color: "#fff",
+                    fontWeight: "bold",
+                    textDecoration: "none",
+                  }}
+                  href={`#${item.toLowerCase()}`}
+                >
+                  {item}
+                </a>
+              </li>
+            ))}
+        </ul>
+      </nav>
     </header>
   );
 };
@@ -64,15 +93,68 @@ const vDOM = {
   props: { name: "John" },
 };
 
+const TestComponent = () => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    console.log(`Effect ran for count: ${count}`);
+    return () => {
+      console.log(`Cleanup for count: ${count}`);
+    };
+  }, [count]);
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount((c) => c + 1)}>Increment</button>
+    </div>
+  );
+};
+
 // Main App component
 export const App = () => {
   const [count, setCount] = useState(0);
   const [color, setColor] = useState("dodgerblue");
   const [inputValue, setInputValue] = useState("");
-  const [items] = useState(["Home", "About", "Contact"]);
+  const [posts, setPosts] = useState([]);
   const [user, setUser] = useState({ name: "John", age: 25 });
   const [showMessage, toggleMessage] = useToggle(false);
   const [isActive, toggleIsActive] = useToggle(false);
+  const [error, setError] = useState(null);
+  const [userId, setUserId] = useState(1);
+
+  useEffect(() => {
+  console.log(`Effect started for userId: ${userId}`);
+  
+  const controller = new AbortController();
+  const signal = controller.signal;
+
+  const fetchData = async () => {
+    try {
+      const response = await fetch(
+        `https://jsonplaceholder.typicode.com/posts?userId=${userId}`,
+        { signal }
+      );
+      if (!response.ok) throw new Error("Network response was not ok");
+      const data = await response.json();
+      console.log(`Fetched data for userId: ${userId}`);
+      setPosts(data.slice(0, 5));
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        setError("Failed to fetch items");
+        console.error("Error fetching items:", error);
+      }
+    }
+  };
+
+  fetchData();
+
+  return () => {
+    console.log(`Cleanup for userId: ${userId}`);
+    controller.abort();
+  };
+}, [userId]);
+
 
   const toggleColor = (e) => {
     e.preventDefault();
@@ -97,14 +179,7 @@ export const App = () => {
     );
   };
 
-  return false ? (
-    <div style={{ marginTop: "20px" }}>
-      <Button onClick={toggleMessage} style={{ marginRight: "10px" }}>
-        Toggle Message
-      </Button>
-      {showMessage && <p>This is a conditional message!</p>}
-    </div>
-  ) : (
+  return (
     <div
       style={{
         maxWidth: "500px",
@@ -115,25 +190,27 @@ export const App = () => {
     >
       <Header color={color} />
       <nav style={{ margin: "0" }}>
-        <h2>Testing list</h2>
+        <h2>Latest Posts</h2>
         <ul
           style={{
             display: "flex",
-            justifyContent: "space-between",
-            width: "150px",
+            flexDirection: "column",
             margin: "0",
             padding: "0",
           }}
         >
-          {items &&
-            items.map((item, idx) => (
-              <li
-                key={idx}
-                style={{ listStyle: "none", textDecoration: "none" }}
-              >
-                <a href={`#${item.toLowerCase()}`}>{item}</a>
-              </li>
-            ))}
+          {posts.map((item) => (
+            <li
+              key={item.id}
+              style={{ listStyle: "none", marginBottom: "10px" }}
+            >
+              <strong>{item.title}</strong>
+              <p>{item.body}</p>
+            </li>
+          ))}
+          <button onClick={() => setUserId((id) => id + 1)}>
+            Load Next User's Posts
+          </button>
         </ul>
       </nav>
       <main id="content">
@@ -153,10 +230,6 @@ export const App = () => {
             <Button onClick={handleComplexEvent} style={{ marginLeft: "10px" }}>
               Increment by 5 and toggle color
             </Button>
-          </div>
-          <div>
-            <h2>Testing function as children</h2>
-            <div>{vDOM}</div>
           </div>
           <div style={{ marginTop: "20px" }}>
             <Button onClick={toggleMessage} style={{ marginRight: "10px" }}>

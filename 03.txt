@@ -1,0 +1,12 @@
+The useEffect implementation is still valuable even if state changes trigger re-renders. The useEffect hook is designed for handling side effects—operations that occur after the DOM has been updated, like fetching data, setting up subscriptions, or manually manipulating the DOM.
+
+Why You Might Still Need useEffect:
+Side Effects Management:
+
+useEffect is not just about triggering re-renders; it's primarily used for handling effects that should happen after the DOM updates. For example, if you need to fetch data after a component mounts or update the document title when a component's state changes, useEffect is the right tool.
+Conditional Execution:
+
+useEffect can be set up to run only when certain dependencies change. This prevents unnecessary operations or API calls, enhancing performance and avoiding unintended behaviors.
+Cleanup Functionality:
+
+useEffect supports cleanup operations. For instance, if you set up a timer or a subscription, the cleanup function ensures that those resources are released when the component unmounts or before the effect runs again due to a dependency change.
