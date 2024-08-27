@@ -27,58 +27,95 @@ class MyReact {
     const setState = (newValue) => {
       const newState =
         typeof newValue === "function" ? newValue(this.state[idx]) : newValue;
-      if (this.state[idx] !== newState) {
+      // if (this.state[idx] !== newState) {
         this.state[idx] = newState;
         this.processUpdate();
-      }
+      // }
     };
 
     this.stateIdx++;
     return [this.state[idx], setState];
   };
 
-useEffect = (callback, dependencies = []) => {
-  const idx = this.effectIdx;
+  useEffect = (callback, dependencies = []) => {
+    const idx = this.effectIdx;
 
-  if (!this.isRendering) {
-    throw new Error("useEffect can only be called during rendering");
-  }
-
-  const previousEffect = this.effects[idx];
-  const depsChanged = previousEffect
-    ? !dependencies.every((dep, i) => dep === previousEffect.deps[i])
-    : true;
-
-  if (depsChanged) {
-    if (previousEffect?.cleanup) {
-      previousEffect.cleanup();
+    if (!this.isRendering) {
+      throw new Error("useEffect can only be called during rendering");
     }
 
-    const cleanup = callback();
-    this.effects[idx] = {
-      deps: dependencies,
-      callback,
-      cleanup: typeof cleanup === "function" ? cleanup : undefined,
-    };
-  }
+    const previousEffect = this.effects[idx];
+    const depsChanged = previousEffect
+      ? !dependencies.every((dep, i) => dep === previousEffect.deps[i])
+      : true;
 
-  this.effectIdx++;
-};
+    if (depsChanged) {
+      if (previousEffect?.cleanup) {
+        previousEffect.cleanup();
+      }
+
+      const cleanup = callback();
+      this.effects[idx] = {
+        deps: dependencies,
+        cleanup: typeof cleanup === "function" ? cleanup : undefined,
+      };
+    }
+
+    this.effectIdx++;
+  };
 
   runEffects = () => {
-    this.effects.forEach((effect, idx) => {
-      if (effect) {
-        if (typeof effect.cleanup === "function") {
-          effect.cleanup();
-        }
-
-        const newCleanup = effect.callback ? effect.callback() : undefined;
-        this.effects[idx].cleanup =
-          typeof newCleanup === "function" ? newCleanup : undefined;
+    this.effects.forEach((effect) => {
+      if (effect && effect.depsChanged) {
+        if (effect.cleanup) effect.cleanup();
+        effect.cleanup = effect.callback();
       }
     });
   };
-  
+
+
+  // useEffect = (callback, dependencies = []) => {
+  //   const idx = this.effectIdx;
+
+  //   if (!this.isRendering) {
+  //     throw new Error("useEffect can only be called during rendering");
+  //   }
+
+  //   const previousEffect = this.effects[idx];
+  //   const depsChanged = previousEffect
+  //     ? !dependencies.every((dep, i) => dep === previousEffect.deps[i])
+  //     : true;
+
+  //   if (depsChanged) {
+  //     if (previousEffect?.cleanup) {
+  //       previousEffect.cleanup();
+  //     }
+
+  //     const cleanup = callback();
+  //     this.effects[idx] = {
+  //       deps: dependencies,
+  //       callback,
+  //       cleanup: typeof cleanup === "function" ? cleanup : undefined,
+  //     };
+  //   }
+
+  //   this.effectIdx++;
+  // };
+
+  //   runEffects = () => {
+  //     this.effects.forEach((effect, idx) => {
+  //       if (effect) {
+  //         if (typeof effect.cleanup === "function") {
+  //           effect.cleanup();
+  //         }
+
+  //         const newCleanup = effect.callback ? effect.callback() : undefined;
+  //         this.effects[idx].cleanup =
+  //           typeof newCleanup === "function" ? newCleanup : undefined;
+  //       }
+  //     });
+  //   };
+
   processUpdate = () => {
     if (!this.isUpdateScheduled) {
       this.isUpdateScheduled = true;
@@ -249,10 +286,10 @@ useEffect = (callback, dependencies = []) => {
     return typeof type === "function"
       ? type({ ...restProps, children: normalizedChildren })
       : {
-          type,
-          props: { ...restProps, children: normalizedChildren },
-          key,
-        };
+        type,
+        props: { ...restProps, children: normalizedChildren },
+        key,
+      };
   };
 }
 
