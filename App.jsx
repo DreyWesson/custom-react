@@ -124,37 +124,36 @@ export const App = () => {
   const [userId, setUserId] = useState(1);
 
   useEffect(() => {
-  console.log(`Effect started for userId: ${userId}`);
-  
-  const controller = new AbortController();
-  const signal = controller.signal;
+    console.log(`Effect started for userId: ${userId}`);
 
-  const fetchData = async () => {
-    try {
-      const response = await fetch(
-        `https://jsonplaceholder.typicode.com/posts?userId=${userId}`,
-        { signal }
-      );
-      if (!response.ok) throw new Error("Network response was not ok");
-      const data = await response.json();
-      console.log(`Fetched data for userId: ${userId}`);
-      setPosts(data.slice(0, 5));
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        setError("Failed to fetch items");
-        console.error("Error fetching items:", error);
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    const fetchData = async () => {
+      try {
+        const response = await fetch(
+          `https://jsonplaceholder.typicode.com/posts?userId=${userId}`,
+          { signal }
+        );
+        if (!response.ok) throw new Error("Network response was not ok");
+        const data = await response.json();
+        console.log(`Fetched data for userId: ${userId}`);
+        setPosts(data.slice(0, 5));
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setError("Failed to fetch items");
+          console.error("Error fetching items:", error);
+        }
       }
-    }
-  };
+    };
 
-  fetchData();
+    fetchData();
 
-  return () => {
-    console.log(`Cleanup for userId: ${userId}`);
-    controller.abort();
-  };
-}, [userId]);
-
+    return () => {
+      console.log(`Cleanup for userId: ${userId}`);
+      controller.abort();
+    };
+  }, [userId]);
 
   const toggleColor = (e) => {
     e.preventDefault();

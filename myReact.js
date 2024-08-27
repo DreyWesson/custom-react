@@ -73,49 +73,6 @@ class MyReact {
     });
   };
 
-
-  // useEffect = (callback, dependencies = []) => {
-  //   const idx = this.effectIdx;
-
-  //   if (!this.isRendering) {
-  //     throw new Error("useEffect can only be called during rendering");
-  //   }
-
-  //   const previousEffect = this.effects[idx];
-  //   const depsChanged = previousEffect
-  //     ? !dependencies.every((dep, i) => dep === previousEffect.deps[i])
-  //     : true;
-
-  //   if (depsChanged) {
-  //     if (previousEffect?.cleanup) {
-  //       previousEffect.cleanup();
-  //     }
-
-  //     const cleanup = callback();
-  //     this.effects[idx] = {
-  //       deps: dependencies,
-  //       callback,
-  //       cleanup: typeof cleanup === "function" ? cleanup : undefined,
-  //     };
-  //   }
-
-  //   this.effectIdx++;
-  // };
-
-  //   runEffects = () => {
-  //     this.effects.forEach((effect, idx) => {
-  //       if (effect) {
-  //         if (typeof effect.cleanup === "function") {
-  //           effect.cleanup();
-  //         }
-
-  //         const newCleanup = effect.callback ? effect.callback() : undefined;
-  //         this.effects[idx].cleanup =
-  //           typeof newCleanup === "function" ? newCleanup : undefined;
-  //       }
-  //     });
-  //   };
-
   processUpdate = () => {
     if (!this.isUpdateScheduled) {
       this.isUpdateScheduled = true;
