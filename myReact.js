@@ -1,5 +1,5 @@
 import { App } from "./App.jsx";
-import { createKeyedMap, hasNodeChanged, updateProps } from "./helper/index";
+import { createRealDOM, diff } from "./helper/domHelpers";
 
 class MyReact {
   constructor() {
@@ -27,10 +27,8 @@ class MyReact {
     const setState = (newValue) => {
       const newState =
         typeof newValue === "function" ? newValue(this.state[idx]) : newValue;
-      // if (this.state[idx] !== newState) {
-        this.state[idx] = newState;
-        this.processUpdate();
-      // }
+      this.state[idx] = newState;
+      this.processUpdate();
     };
 
     this.stateIdx++;
@@ -46,7 +44,7 @@ class MyReact {
 
     const previousEffect = this.effects[idx];
     const depsChanged = previousEffect
-      ? !dependencies.every((dep, i) => dep === previousEffect.deps[i])
+      ? dependencies.some((dep, i) => !Object.is(dep, previousEffect.deps[i]))
       : true;
 
     if (depsChanged) {
@@ -98,135 +96,10 @@ class MyReact {
   renderToDOM = (newVDOM, root) => {
     this.container = root;
 
-    if (!this.oldVDOM) root.appendChild(this.createRealDOM(newVDOM));
-    else this.diff(root, this.oldVDOM, newVDOM);
+    if (!this.oldVDOM) root.appendChild(createRealDOM(newVDOM));
+    else diff(root, this.oldVDOM, newVDOM);
 
     this.oldVDOM = newVDOM;
-  };
-
-  handleHTML(element) {
-    const { key, children, ...props } = element.props;
-    const domElement = document.createElement(element.type);
-
-    updateProps(domElement, {}, props);
-    this.appendChildren(domElement, children);
-
-    return domElement;
-  }
-
-  createRealDOM = (element) => {
-    if (typeof element === "string" || typeof element === "number") {
-      return document.createTextNode(String(element));
-    }
-    if (!element || !element.type) {
-      return document.createTextNode("");
-    }
-
-    if (typeof element.type === "function") {
-      const renderedElement = element.type(element.props);
-      return this.createRealDOM(renderedElement);
-    }
-
-    return this.handleHTML(element);
-  };
-
-  appendChildren = (domElement, children) => {
-    children
-      .filter((child) => {
-        return (
-          child != null &&
-          child !== false &&
-          child !== "" &&
-          typeof child !== "boolean"
-        );
-      })
-      .map((child) => this.createRealDOM(child))
-      .forEach((child) => domElement.appendChild(child));
-  };
-
-  diff = (parent, oldNode, newNode, index = 0) => {
-    const existingNode = parent.childNodes[index];
-
-    if (typeof newNode === "string" || typeof newNode === "number") {
-      if (existingNode.nodeType === Node.TEXT_NODE) {
-        if (existingNode.textContent !== String(newNode)) {
-          existingNode.textContent = String(newNode);
-        }
-      } else {
-        const newTextNode = document.createTextNode(String(newNode));
-        parent.replaceChild(newTextNode, existingNode);
-      }
-      return;
-    }
-
-    if (!newNode) {
-      if (existingNode) parent.removeChild(existingNode);
-      return;
-    }
-
-    if (!oldNode) {
-      parent.appendChild(this.createRealDOM(newNode));
-      return;
-    }
-
-    if (hasNodeChanged(oldNode, newNode)) {
-      const newDomNode = this.createRealDOM(newNode);
-      parent.replaceChild(newDomNode, existingNode);
-      return;
-    }
-
-    if (newNode.type) {
-      updateProps(existingNode, oldNode.props, newNode.props);
-      this.diffChildren(
-        existingNode,
-        oldNode.props.children,
-        newNode.props.children
-      );
-    }
-  };
-
-  diffChildren = (parent, oldChildren = [], newChildren = []) => {
-    const oldChildrenKeyed = createKeyedMap(oldChildren);
-    const newChildrenKeyed = createKeyedMap(newChildren);
-
-    const handledIndices = this.updateNewChildren(
-      parent,
-      newChildren,
-      oldChildren,
-      oldChildrenKeyed
-    );
-
-    this.removeOldChildren(
-      parent,
-      oldChildren,
-      newChildrenKeyed,
-      handledIndices
-    );
-  };
-
-  updateNewChildren = (parent, newChildren, oldChildren, oldChildrenKeyed) => {
-    const handledIndices = new Set();
-
-    newChildren.forEach((newChild, i) => {
-      const oldChild = oldChildrenKeyed[newChild?.key] || oldChildren[i];
-      this.diff(parent, oldChild, newChild, i);
-      handledIndices.add(i);
-    });
-
-    return handledIndices;
-  };
-
-  removeOldChildren = (
-    parent,
-    oldChildren,
-    newChildrenKeyed,
-    handledIndices
-  ) => {
-    oldChildren.forEach((oldChild, i) => {
-      if (!handledIndices.has(i) && !newChildrenKeyed[oldChild?.key]) {
-        this.diff(parent, oldChild, null, i);
-      }
-    });
   };
 
   createElement = (type, props = {}, ...children) => {
@@ -243,10 +116,10 @@ class MyReact {
     return typeof type === "function"
       ? type({ ...restProps, children: normalizedChildren })
       : {
-        type,
-        props: { ...restProps, children: normalizedChildren },
-        key,
-      };
+          type,
+          props: { ...restProps, children: normalizedChildren },
+          key,
+        };
   };
 }
 
