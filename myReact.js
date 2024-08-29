@@ -95,6 +95,7 @@ class MyReact {
 
   renderToDOM = (newVDOM, root) => {
     this.container = root;
+    console.log("New Virtual DOM:", newVDOM);
 
     if (!this.oldVDOM) root.appendChild(createRealDOM(newVDOM));
     else diff(root, this.oldVDOM, newVDOM);
@@ -102,17 +103,40 @@ class MyReact {
     this.oldVDOM = newVDOM;
   };
 
+  // createElement = (type, props = {}, ...children) => {
+  //   props = props || {};
+  //   const { key = null, ...restProps } = props;
+    
+  //   const normalizedChildren = children.flat().map((child, index) => {
+  //     if (typeof child === "object" && child !== null && !child.key) {
+  //       child.key = index;
+  //     }
+  //     return child;
+  //   });
+  
+  //   if (typeof type === "function") {
+  //     return type({ ...restProps, children: normalizedChildren });
+  //   }
+  
+  //   return {
+  //     type,
+  //     props: { ...restProps, children: normalizedChildren },
+  //     key,
+  //   };
+  // };
   createElement = (type, props = {}, ...children) => {
     props = props || {};
     const { key = null, ...restProps } = props;
-
+  
+    console.log("Creating element:", { type, props, children });
+  
     const normalizedChildren = children.flat().map((child, index) => {
       if (typeof child === "object" && child !== null && !child.key) {
         child.key = index;
       }
       return child;
     });
-
+  
     return typeof type === "function"
       ? type({ ...restProps, children: normalizedChildren })
       : {
@@ -121,6 +145,85 @@ class MyReact {
           key,
         };
   };
+  
+
+  // createElement = (type, props = {}, ...children) => {
+  //   props = props || {};
+  //   const { key = null, ...restProps } = props;
+  //   console.log("children", children);
+
+  //   const normalizedChildren = children.flat().map((child, index) => {
+  //     if (typeof child === "object" && child !== null && !child.key) {
+  //       child.key = index;
+  //     }
+  //     return child;
+  //   });
+
+  //   return typeof type === "function"
+  //     ? type({ ...restProps, children: normalizedChildren })
+  //     : {
+  //       type,
+  //       props: { ...restProps, children: normalizedChildren },
+  //       key,
+  //     };
+  // };
+
+  createContext = (defaultValue) => {
+    const context = {
+      value: defaultValue,
+      listeners: new Set(),
+      Provider: ({ value, children }) => {
+        context.value = value;
+        // Notify all components that are consuming this context
+        context.listeners.forEach((listener) => listener(value));
+        return children;
+      },
+      Consumer: ({ children }) => {
+        if (typeof children === "function") {
+          return children(context.value);
+        }
+        return children;  // Return as is if it's not a function
+      },
+    };
+    return context;
+  };
+
+  // useContext = (context) => {
+  //   if (!this.isRendering) {
+  //     throw new Error("useContext can only be called during rendering");
+  //   }
+  
+  //   const [state, setState] = this.useState(context.value);
+  
+  //   console.log("Context value:", context.value, "Current state:", state);
+  
+  //   if (state !== context.value && !context.listeners.has(setState)) {
+  //     console.log("Context value changed, updating state...");
+  //     context.listeners.add((newValue) => {
+  //       setState(newValue);
+  //     });
+  //   }
+  
+  //   return state;
+  // };
+  useContext = (context) => {
+    if (!this.isRendering) {
+      throw new Error("useContext can only be called during rendering");
+    }
+  
+    const [state, setState] = this.useState(context.value);
+  
+    if (!context.listeners.has(setState)) {
+      context.listeners.add(setState);
+    }
+  
+    console.log("Context value:", context.value);
+    console.log("Current state:", state);
+  
+    return state;
+  };
+  
+  
 }
 
 const myReactInstance = new MyReact();
@@ -129,3 +232,6 @@ export const createElement = myReactInstance.createElement;
 export const useState = myReactInstance.useState;
 export const render = myReactInstance.render;
 export const useEffect = myReactInstance.useEffect;
+export const createContext = myReactInstance.createContext;
+export const useContext = myReactInstance.useContext;
+export default myReactInstance;
