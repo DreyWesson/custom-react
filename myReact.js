@@ -11,6 +11,7 @@ class MyReact {
     this.oldVDOM = null;
     this.container = null;
     this.isUpdateScheduled = false;
+    this.contexts = new Map();
   }
 
   useState = (initialValue) => {
@@ -121,6 +122,40 @@ class MyReact {
           key,
         };
   };
+  createContext = (defaultValue) => {
+    const context = {
+      value: defaultValue,
+      subscribers: new Set(),
+    };
+
+    context.Provider = ({ value, children }) => {
+      context.value = value;
+      context.subscribers.forEach((subscriber) => subscriber()); // Notify subscribers
+      return this.createElement('div', {}, ...children); // Render children
+    };
+
+    return context;
+  };
+
+  useContext = (context) => {
+    if (!this.isRendering) {
+      throw new Error("useContext can only be called during rendering");
+    }
+
+    const contextInstance = this.contexts.get(context) || context;
+    
+    const subscriber = () => {
+      this.processUpdate(); // Re-render when context value changes
+    };
+
+    contextInstance.subscribers.add(subscriber);
+
+    this.useEffect(() => {
+      return () => contextInstance.subscribers.delete(subscriber);
+    }, []);
+
+    return contextInstance.value;
+  };
 }
 
 const myReactInstance = new MyReact();
@@ -129,3 +164,5 @@ export const createElement = myReactInstance.createElement;
 export const useState = myReactInstance.useState;
 export const render = myReactInstance.render;
 export const useEffect = myReactInstance.useEffect;
+export const useContext = myReactInstance.useContext;
+export const createContext = myReactInstance.createContext;
