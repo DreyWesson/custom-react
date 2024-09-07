@@ -20,15 +20,14 @@ export const useFetchData = () => {
         setPosts(data.slice(0, 5));
       } catch (error) {
         if (error instanceof Error) {
-
-            if (error.name !== "AbortError") {
-              setError("Failed to fetch items");
-            }
+          if (error.name !== "AbortError") {
+            setError("Failed to fetch items");
+          }
         } else {
-            setError("Unknown error")
+          setError("Unknown error")
         }
       } finally {
-        
+
       }
     };
 
@@ -39,5 +38,5 @@ export const useFetchData = () => {
     };
   }, [userId]);
 
-  return { posts,  error, userId, setUserId };
+  return { posts, error, userId, setUserId };
 };

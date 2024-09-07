@@ -3,6 +3,8 @@ import { Input } from "./Input.jsx";
 import { Posts } from "./Posts.jsx";
 import { createElement, useState, useEffect } from "../myReact.js";
 import { useLogic } from "./useLogic.jsx";
+import { useFetchData } from "./useFetchData.jsx";
+import { PostContext } from "./context.jsx";
 
 // Define a functional component
 function Greeting(props) {
@@ -47,10 +49,13 @@ export const Main = () => {
     updateAge,
     setCount,
   } = useLogic();
+  const { posts, userId, setUserId } = useFetchData(userId);
 
   return (
     <main id="content">
-      <Posts />
+      <PostContext.Provider value={{ posts, userId, setUserId }}>
+        <Posts />
+      </PostContext.Provider>
       <Sectioning />
       {vDOM}
       <Sectioning />
