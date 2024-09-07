@@ -1,10 +1,11 @@
 import { Button } from "./Button.jsx";
-import { createElement } from "../myReact.js";
+import { createElement, useContext } from "../myReact.js";
 import { useFetchData } from "./useFetchData.jsx";
+import { PostContext } from "./context.jsx";
 
 export const Posts = () => {
-  const { posts, userId, setUserId } = useFetchData(userId);
-
+  const { posts, userId, setUserId } = useContext(PostContext); 
+console.log({ posts, userId, setUserId })
   return (
       <section style={{ margin: "0" }}>
         <div
@@ -29,7 +30,7 @@ export const Posts = () => {
             padding: "0",
           }}
         >
-          {posts.map((item) => (
+          {posts && posts.map((item) => (
             <li key={item.id} style={{ listStyle: "none", marginBottom: "10px" }}>
               <strong>{item.title}</strong>
               <p>{item.body}</p>

@@ -16,6 +16,7 @@ export const useLogic = () => {
       prevColor === "dodgerblue" ? "#569e56" : "dodgerblue"
     );
   };
+  console.log(color)
 
   const handleInputChange = (e) => setInputValue(e.target.value);
 

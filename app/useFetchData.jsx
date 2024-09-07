@@ -1,4 +1,4 @@
-import { useEffect, useState } from '../myReact'
+import { useEffect, useState } from '../myReact';
 
 export const useFetchData = () => {
   const [posts, setPosts] = useState([]);
@@ -17,26 +17,26 @@ export const useFetchData = () => {
         );
         if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
-        setPosts(data.slice(0, 5));
-      } catch (error) {
-        if (error instanceof Error) {
-          if (error.name !== "AbortError") {
-            setError("Failed to fetch items");
-          }
-        } else {
-          setError("Unknown error")
-        }
-      } finally {
 
+        // Only update posts if the data changes
+        if (data.slice(0, 2) !== posts) {
+          setPosts(data.slice(0, 2));
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name !== "AbortError") {
+          setError("Failed to fetch items");
+        } else {
+          setError("Unknown error");
+        }
       }
     };
 
     fetchData();
 
     return () => {
-      controller.abort();
+      controller.abort(); // Clean up
     };
-  }, [userId]);
+  }, [userId]); // Runs only when `userId` changes
 
   return { posts, error, userId, setUserId };
 };
