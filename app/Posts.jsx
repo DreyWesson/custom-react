@@ -1,10 +1,9 @@
 import { Button } from "./Button.jsx";
 import { createElement, useContext } from "../myReact.js";
-import { useFetchData } from "./useFetchData.jsx";
 import { PostContext } from "./context.jsx";
 
 export const Posts = () => {
-  const { posts, userId, setUserId } = useContext(PostContext); 
+  const { posts, userId, setUserId } = useContext(PostContext);
 console.log({ posts, userId, setUserId })
   return (
       <section style={{ margin: "0" }}>

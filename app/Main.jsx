@@ -1,7 +1,7 @@
 import { Button } from "./Button.jsx";
 import { Input } from "./Input.jsx";
 import { Posts } from "./Posts.jsx";
-import { createElement, useState, useEffect } from "../myReact.js";
+import { createElement, useState, useEffect, useMemo } from "../myReact.js";
 import { useLogic } from "./useLogic.jsx";
 import { useFetchData } from "./useFetchData.jsx";
 import { PostContext } from "./context.jsx";
@@ -49,8 +49,8 @@ export const Main = () => {
     updateAge,
     setCount,
   } = useLogic();
-  const { posts, userId, setUserId } = useFetchData(userId);
-
+  const { posts, userId, setUserId } = useFetchData();
+  // console.log({ posts, userId, setUserId })
   return (
     <main id="content">
       <PostContext.Provider value={{ posts, userId, setUserId }}>

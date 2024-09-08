@@ -14,6 +14,39 @@ class MyReact {
     this.contexts = new Map();
   }
 
+  useMemo = (fn, dependencies) => {
+    const memoIdx = this.stateIdx; // Use current index for memo storage
+    
+    if (!this.isRendering) {
+      throw new Error("useMemo can only be called during rendering");
+    }
+    
+    // Check if the value has been computed before
+    const prevMemo = this.state[memoIdx];
+  
+    // If this is the first time or dependencies have changed, compute new value
+    if (!prevMemo) {
+      const computedValue = fn(); // Compute value for the first time
+      this.state[memoIdx] = { value: computedValue, dependencies };
+      this.stateIdx++; // Move to the next index in state
+      return computedValue;
+    }
+  
+    // Check if dependencies have changed
+    const depsChanged = dependencies.some((dep, i) => !Object.is(dep, prevMemo.dependencies[i]));
+    
+    if (depsChanged) {
+      const computedValue = fn(); // Recompute the memoized value
+      this.state[memoIdx] = { value: computedValue, dependencies }; // Update memo value and dependencies
+      this.stateIdx++; // Move to next index
+      return computedValue;
+    }
+    
+    // If dependencies haven't changed, return memoized value
+    this.stateIdx++;
+    return prevMemo.value;
+  };
+
   useState = (initialValue) => {
     const idx = this.stateIdx;
 
@@ -130,8 +163,8 @@ class MyReact {
 
     context.Provider = ({ value, children }) => {
       context.value = value;
-      context.subscribers.forEach((subscriber) => subscriber()); // Notify subscribers
-      return this.createElement('div', {}, ...children); // Render children
+      context.subscribers.forEach((subscriber) => subscriber());
+      return this.createElement('div', {}, ...children);
     };
 
     return context;
@@ -145,7 +178,9 @@ class MyReact {
     const contextInstance = this.contexts.get(context) || context;
     
     const subscriber = () => {
-      this.processUpdate(); // Re-render when context value changes
+      if (contextInstance.value !== context.value) {  // Check if context value has changed
+        this.processUpdate();
+      }
     };
 
     contextInstance.subscribers.add(subscriber);
@@ -159,10 +194,4 @@ class MyReact {
 }
 
 const myReactInstance = new MyReact();
-
-export const createElement = myReactInstance.createElement;
-export const useState = myReactInstance.useState;
-export const render = myReactInstance.render;
-export const useEffect = myReactInstance.useEffect;
-export const useContext = myReactInstance.useContext;
-export const createContext = myReactInstance.createContext;
+export const {createContext, createElement, useContext, useEffect, useMemo, useState, render} = myReactInstance
