@@ -170,27 +170,55 @@ class MyReact {
     return context;
   };
 
+  // useContext = (context) => {
+  //   if (!this.isRendering) {
+  //     throw new Error("useContext can only be called during rendering");
+  //   }
+
+  //   const contextInstance = this.contexts.get(context) || context;
+    
+  //   const subscriber = () => {
+  //     if (contextInstance.value !== context.value) {  // Check if context value has changed
+  //       this.processUpdate();
+  //     }
+  //   };
+
+  //   contextInstance.subscribers.add(subscriber);
+
+  //   this.useEffect(() => {
+  //     return () => contextInstance.subscribers.delete(subscriber);
+  //   }, []);
+
+  //   return contextInstance.value;
+  // };
   useContext = (context) => {
     if (!this.isRendering) {
       throw new Error("useContext can only be called during rendering");
     }
-
+  
     const contextInstance = this.contexts.get(context) || context;
-    
+
+    const currentValue = contextInstance.value;
+
     const subscriber = () => {
-      if (contextInstance.value !== context.value) {  // Check if context value has changed
+      if (contextInstance.value !== currentValue) {
+        console.log("Context value changed, re-rendering...");
         this.processUpdate();
       }
     };
-
+  
     contextInstance.subscribers.add(subscriber);
 
     this.useEffect(() => {
-      return () => contextInstance.subscribers.delete(subscriber);
-    }, []);
-
+      return () => {
+        console.log("Cleaning up subscriber...");
+        contextInstance.subscribers.delete(subscriber);
+      };
+    }, [contextInstance]);
+  
     return contextInstance.value;
   };
+  
 }
 
 const myReactInstance = new MyReact();
