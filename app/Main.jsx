@@ -50,7 +50,7 @@ export const Main = () => {
     setCount,
   } = useLogic();
   const { posts, userId, setUserId } = useFetchData();
-  // console.log({ posts, userId, setUserId })
+  
   return (
     <main id="content">
       <PostContext.Provider value={{ posts, userId, setUserId }}>
