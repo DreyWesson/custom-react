@@ -170,27 +170,6 @@ class MyReact {
     return context;
   };
 
-  // useContext = (context) => {
-  //   if (!this.isRendering) {
-  //     throw new Error("useContext can only be called during rendering");
-  //   }
-
-  //   const contextInstance = this.contexts.get(context) || context;
-    
-  //   const subscriber = () => {
-  //     if (contextInstance.value !== context.value) {  // Check if context value has changed
-  //       this.processUpdate();
-  //     }
-  //   };
-
-  //   contextInstance.subscribers.add(subscriber);
-
-  //   this.useEffect(() => {
-  //     return () => contextInstance.subscribers.delete(subscriber);
-  //   }, []);
-
-  //   return contextInstance.value;
-  // };
   useContext = (context) => {
     if (!this.isRendering) {
       throw new Error("useContext can only be called during rendering");
@@ -223,3 +202,146 @@ class MyReact {
 
 const myReactInstance = new MyReact();
 export const {createContext, createElement, useContext, useEffect, useMemo, useState, render} = myReactInstance
+
+
+// export const Route = ({ path, component }) => {
+//   const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+//   useEffect(() => {
+//     const onLocationChange = () => {
+//       setCurrentPath(window.location.pathname);
+//     };
+
+//     window.addEventListener("popstate", onLocationChange);
+
+//     return () => {
+//       window.removeEventListener("popstate", onLocationChange);
+//     };
+//   }, []);
+
+//   if (currentPath === path) {
+//     return createElement(component);
+//   }
+//   return null;
+// };
+
+// export const Router = ({ children }) => {
+//   return createElement('div', {}, ...children);
+// };
+
+// export const Link = ({ to, children }) => {
+//   const handleClick = (event) => {
+//     event.preventDefault();
+//     window.history.pushState({}, '', to);
+//     const popStateEvent = new PopStateEvent('popstate');
+//     window.dispatchEvent(popStateEvent);
+//   };
+
+//   return createElement('a', { href: to, onClick: handleClick }, ...children);
+// };
+// export const Route = ({ path, component }) => {
+//   const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+//   // Listen for changes in the path using useEffect
+//   useEffect(() => {
+//     const onLocationChange = () => {
+//       setCurrentPath(window.location.pathname);  // Update state when path changes
+//     };
+
+//     window.addEventListener("popstate", onLocationChange);
+
+//     // Cleanup the event listener when the component is unmounted
+//     return () => {
+//       window.removeEventListener("popstate", onLocationChange);
+//     };
+//   }, []);
+
+//   // Compare the current path with the route path and render the component if they match
+//   if (currentPath === path) {
+//     return createElement(component);
+//   }
+
+//   return null;
+// };
+
+// export const Router = ({ children }) => {
+//   return createElement('div', {}, ...children);
+// };
+
+// export const Link = ({ to, children }) => {
+//   const handleClick = (event) => {
+//     event.preventDefault();
+//     window.history.pushState({}, '', to); // Update the browser history
+
+//     // Manually trigger the popstate event to notify the Route components
+//     const popStateEvent = new PopStateEvent('popstate');
+//     window.dispatchEvent(popStateEvent); // This will trigger the useEffect in the Route
+//   };
+
+//   // Render the link with the event handler
+//   return createElement('a', { href: to, onClick: handleClick }, ...children);
+// };
+
+export const Route = ({ path, component }) => {
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  // Listen for changes in the path
+  useEffect(() => {
+    const onLocationChange = () => {
+      console.log("Location changed:", window.location.pathname); // Log path change
+      setCurrentPath(window.location.pathname);  // Update state when path changes
+    };
+
+    window.addEventListener("popstate", onLocationChange);
+
+    // Cleanup the event listener when the component is unmounted
+    return () => {
+      window.removeEventListener("popstate", onLocationChange);
+    };
+  }, []);
+
+  console.log("Current Path:", currentPath); // Log the current path
+
+  // Compare the current path with the route path and render the component if they match
+  if (currentPath === path) {
+    console.log("Rendering component for path:", path); // Log which component is being rendered
+    return createElement(component);
+  }
+
+  return null;
+};
+
+export const Router = ({ children }) => {
+  return createElement('div', {}, ...children);
+};
+
+export const Link = ({ to, children }) => {
+  const handleClick = (event) => {
+    event.preventDefault();
+    window.history.pushState({}, '', to); // Update the browser history
+
+    console.log("Navigating to:", to); // Log the navigation path
+
+    // Manually trigger the popstate event to notify the Route components
+    const popStateEvent = new PopStateEvent('popstate');
+    window.dispatchEvent(popStateEvent); // This will trigger the useEffect in the Route
+  };
+
+  // Render the link with the event handler
+  return createElement('a', { href: to, onClick: handleClick }, ...children);
+};
+export const Switch = ({ children }) => {
+  const currentPath = window.location.pathname;
+
+  // Iterate over the children and render the first route that matches
+  for (let child of children) {
+    // Add a null check for safety
+    if (child && child.props) {
+      if (child.props.path === currentPath || child.props.path === '*') {
+        return createElement(child.props.component);
+      }
+    }
+  }
+
+  return null;
+};
